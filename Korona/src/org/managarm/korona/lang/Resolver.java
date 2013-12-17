@@ -288,7 +288,7 @@ public class Resolver {
 		AuTerm res_type = function.type().reduce();
 		while(k < apply_arity) {
 			if(!(res_type instanceof AuPi))
-				throw new RuntimeException("Not a function type");
+				return;
 			AuPi pi = (AuPi)res_type;
 
 			Unificator.ImUnknown unknown = new Unificator.ImUnknown();
@@ -309,8 +309,8 @@ public class Resolver {
 		}
 		int func_arity = unknown_args.size();
 		
-		AuTerm signature = mkOperator(Unificator.dummy,
-				function.type().reduce());
+		AuTerm signature = function;
+				//mkOperator(Unificator.dummy, function.type().reduce());
 		for(int i = 0; i < func_arity; i++)
 			signature = mkApply(signature, unknown_args.get(i).reduce());
 		
@@ -319,8 +319,8 @@ public class Resolver {
 		// for each "real" argument unify the "virtual" function
 		// signature with the "real" argument type
 		for(int i = 0; i < apply_arity; i++) {
-			AuTerm instance = mkOperator(Unificator.dummy,
-					function.type().reduce());
+			AuTerm instance = function; 
+					//mkOperator(Unificator.dummy, function.type().reduce());
 			for(int j = 0; j < func_arity; j++) {
 				Integer mapping = arg_mapping.get(j);
 				if(mapping != null && mapping == i) {

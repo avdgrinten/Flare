@@ -29,7 +29,7 @@ public class Parser {
 		number,
 		ident, charIdent, operatorIdent,
 		string,
-		specSemicolon, specEqual, specDoubleEqual,
+		specSemicolon, specEqual, specColonEqual, specDoubleEqual,
 			specPlus, specMinus, specTimes, specSlash, specPercent,
 			specParL, specParR, specCurlyL, specCurlyR,
 			specDot, specColon, specDoubleColon, specQm,
@@ -192,6 +192,8 @@ public class Parser {
 				PegParser.singleChar('%')), PegParser.forgetLeft));
 		g.setRule(Tag.specEqual, transform(sequence(g.ref(Tag.space),
 				PegParser.singleChar('=')), PegParser.forgetLeft));
+		g.setRule(Tag.specColonEqual, transform(sequence(g.ref(Tag.space),
+				PegParser.string(":=")), PegParser.forgetLeft));
 		g.setRule(Tag.specDoubleEqual, transform(sequence(g.ref(Tag.space),
 				PegParser.string("==")), PegParser.forgetLeft));
 		g.setRule(Tag.specParL, transform(sequence(g.ref(Tag.space),
@@ -572,7 +574,7 @@ public class Parser {
 			}}));
 		g.setRule(Tag.exportRoot, transform(sequence(optional(g.ref(Tag.kwEmbed)),
 				g.ref(Tag.kwExport), g.ref(Tag.ident),
-				g.ref(Tag.specEqual), g.ref(Tag.expr), g.ref(Tag.specSemicolon)),
+				g.ref(Tag.specColonEqual), g.ref(Tag.expr), g.ref(Tag.specSemicolon)),
 				new PegTransform<Object[]>() {
 			@Override public Object transform(Object[] in) {
 				int flags = StRoot.Symbol.kFlagExport;

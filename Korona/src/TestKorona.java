@@ -12,6 +12,7 @@ import org.managarm.aurora.builtin.Bool;
 import org.managarm.aurora.builtin.IntArithmetic;
 import org.managarm.aurora.builtin.Io;
 import org.managarm.aurora.builtin.Lists;
+import org.managarm.aurora.builtin.Locals;
 import org.managarm.aurora.builtin.Mutation;
 import org.managarm.aurora.builtin.Nil;
 import org.managarm.aurora.builtin.Products;
@@ -74,6 +75,10 @@ public class TestKorona {
 		resolver.addBuiltin(Mutation.mutatorType);
 		resolver.addBuiltin(Mutation.lift);
 		resolver.addBuiltin(Mutation.seq);
+		resolver.addBuiltin(Locals.localType);
+		resolver.addBuiltin(Locals.localAlloc);
+		resolver.addBuiltin(Locals.localRead);
+		resolver.addBuiltin(Locals.localWrite);
 		resolver.addBuiltin(Io.print);
 		
 		long resolve_start = System.currentTimeMillis();

@@ -1,54 +1,74 @@
 
 module Korona {
-	@embed export Nil = Builtin.Nil;
-	@embed export Bool = Builtin.Bool;
-	@embed export Int = Builtin.Int;
-	@embed export String = Builtin.String;
-	@embed export List = Builtin.List;
-	@embed export Any = Builtin.Any;
-	@embed export Mutator = Builtin.Mutator;
+	@embed export Nil := Builtin.Nil;
+	@embed export Bool := Builtin.Bool;
+	@embed export Int := Builtin.Int;
+	@embed export String := Builtin.String;
+	@embed export List := Builtin.List;
+	@embed export Any := Builtin.Any;
+	@embed export Mutator := Builtin.Mutator;
+	@embed export Local := Builtin.Local;
 	
-	export (+) = x:Int => y:Int => Builtin.intAdd x y;
-	export (-) = x:Int => y:Int => Builtin.intSub x y;
-	export (*) = x:Int => y:Int => Builtin.intMul x y;
-	export (/) = x:Int => y:Int => Builtin.intDiv x y;
-	export (%) = x:Int => y:Int => Builtin.intMod x y;
-	export (==) = x:Int => y:Int => Builtin.intEq x y;
+	export nil := Builtin.nil;
 	
-	export (||) = p:Bool => q:Bool => Builtin.boolOr p q;
-	export (&&) = p:Bool => q:Bool => Builtin.boolAnd p q;
+	export (+) := x:Int => y:Int => Builtin.intAdd x y;
+	export (-) := x:Int => y:Int => Builtin.intSub x y;
+	export (*) := x:Int => y:Int => Builtin.intMul x y;
+	export (/) := x:Int => y:Int => Builtin.intDiv x y;
+	export (%) := x:Int => y:Int => Builtin.intMod x y;
+	export (==) := x:Int => y:Int => Builtin.intEq x y;
 	
-	export (ite) = @implicit T:Meta => c:Bool => t:T => e:T =>
+	export (||) := p:Bool => q:Bool => Builtin.boolOr p q;
+	export (&&) := p:Bool => q:Bool => Builtin.boolAnd p q;
+	
+	export (ite) := @implicit T:Meta => c:Bool => t:T => e:T =>
 		Builtin.ite T c t e;
 	
-	export (>>) = @implicit X:Meta => @implicit Y:Meta =>
+	export lift := @implicit T:Meta => x:T =>
+		Builtin.lift T x;
+	export (>>) := @implicit X:Meta => @implicit Y:Meta =>
 		m:(Mutator X) => f:(x:X -> (Mutator Y)) => Builtin.seq X Y m f;
+	export (>>) := @implicit T:Meta => first:(Mutator Nil) => second:(Mutator T) =>
+		first >> x:Nil => second;
 	
-	export (chain) = p:(Mutator Nil) => q:(Mutator Nil) =>
+	export (chain) := p:(Mutator Nil) => q:(Mutator Nil) =>
 		Builtin.seq Nil Nil p (x:Nil => q);
 	
-	export intFold = count:Int => @implicit T:Meta => initial:T
+	export intFold := count:Int => @implicit T:Meta => initial:T
 			=> f:(current:T -> k:Int -> T) =>
 		Builtin.intFold count T initial f;
 	
-	export intSum = n:Int => f:(k:Int -> Int) =>
+	export intSum := n:Int => f:(k:Int -> Int) =>
 		intFold n 0 (x:Int => k:Int => x + (f k));
 	
-	export emptyList = Builtin.emptyList;
-	export singletonList = Builtin.singletonList;
+	export emptyList := Builtin.emptyList;
+	export singletonList := Builtin.singletonList;
 	
-	export (+) = @implicit T:Meta => list:(List T) => item:T =>
+	export (+) := @implicit T:Meta => list:(List T) => item:T =>
 		Builtin.listAppend T list item;
 	
-	export any = @implicit T:Meta => x:T =>
+	export any := @implicit T:Meta => x:T =>
 		Builtin.any T x;
 	
-	export print = @implicit T:Meta => x:T =>
+	export print := @implicit T:Meta => x:T =>
 		Builtin.print T x;
+	
+	export do := @implicit T:Meta => m:(Mutator T) =>
+		m >> result:T => lift nil;
+	
+	export localAlloc := @implicit L:Meta => @implicit T:Meta =>
+			scope:(v:(Local L) -> Mutator T) =>
+		Builtin.localAlloc L T scope;
+	export localRead := @implicit L:Meta => local:(Local L) =>
+		Builtin.localRead L local;
+	export localWrite := @implicit L:Meta => local:(Local L) => value:L =>
+		Builtin.localWrite L local value;
 }
 
 import Korona;
 
 module Test {
-	export main = print "Hello world!";
+	export main := localAlloc x:(Local Int) =>
+		(localWrite x 42) >> (localRead x) >> (v:Int => print v);
 }
+

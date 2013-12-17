@@ -56,7 +56,7 @@ public final class AuPi extends AuTerm {
 	}
 	@Override public AuTerm reduce() {
 		return new AuPi(this.getAnnotation(),
-				bound, codomain.reduce());
+				bound.reduce(), codomain.reduce());
 	}
 	@Override public boolean wellformed() {
 		if(!bound.wellformed() || !codomain.wellformed())

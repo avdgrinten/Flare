@@ -57,7 +57,7 @@ public final class AuLambda extends AuTerm {
 	}
 	@Override public AuTerm reduce() {
 		return new AuLambda(this.getAnnotation(),
-				bound, expr.reduce());
+				bound.reduce(), expr.reduce());
 	}
 	@Override public boolean wellformed() {
 		if(!bound.wellformed() || !expr.wellformed())
