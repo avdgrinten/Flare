@@ -1,0 +1,16 @@
+
+global (+) = x:Int => y:Int => intAdd x y;
+global (-) = x:Int => y:Int => intSub x y;
+global (*) = x:Int => y:Int => intMul x y;
+global (/) = x:Int => y:Int => intDiv x y;
+global (%) = x:Int => y:Int => intMod x y;
+global (==) = x:Int => y:Int => intEq x y;
+
+global (||) = p:Bool => q:Bool => boolOr p q;
+global (&&) = p:Bool => q:Bool => boolAnd p q;
+
+global run = (intFold 1000 0
+	z:Int => k:Int =>
+		z + if k % 3 == 0 || k % 5 == 0
+			then k else 0
+);

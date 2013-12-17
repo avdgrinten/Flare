@@ -1,0 +1,22 @@
+
+global (+) = x:Int => y:Int => intAdd x y;
+global (-) = x:Int => y:Int => intSub x y;
+global (*) = x:Int => y:Int => intMul x y;
+global (/) = x:Int => y:Int => intDiv x y;
+global (%) = x:Int => y:Int => intMod x y;
+global (==) = x:Int => y:Int => intEq x y;
+
+global intSum = (n:Int => f:(w:Int -> Int) =>
+	(intFold n Int 0 z:Int => k:Int => z + (f k))
+);
+
+global intPower = (base:Int => exp:Int =>
+	intFold exp Int 1
+		pow:Int => k:Int => pow * base
+);
+
+global digitSum = (x:Int => intSum 10
+	k:Int => x / (intPower 10 k) % 10
+);
+
+global run = digitSum 27;

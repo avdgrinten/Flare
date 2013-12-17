@@ -1,0 +1,7 @@
+
+module Test {
+	//export main = x:Builtin.Int => Builtin.intFold x Builtin.Int 0
+	//	(c:Builtin.Int => k:Builtin.Int => Builtin.intAdd c 1);
+	export main = x:Builtin.Int => Builtin.intFold x Builtin.Int 0
+		(c:Builtin.Int => k:Builtin.Int => Builtin.intAdd c k);
+}
