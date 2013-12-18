@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.managarm.aurora.builtin.IntArithmetic;
+import org.managarm.aurora.builtin.Mutation;
 import org.managarm.aurora.builtin.Strings;
 import org.managarm.aurora.builtin.Symbols;
 import org.managarm.aurora.lang.AuConstant;
@@ -23,6 +24,7 @@ import org.managarm.aurora.lang.AuTerm;
 import org.managarm.aurora.util.Descriptor;
 import org.managarm.aurora.util.Descriptor.RecordPath;
 import org.managarm.aurora.util.NamedTerm;
+import org.managarm.aurora.util.TermMap;
 import org.managarm.aurora.util.Unificator;
 import org.managarm.korona.syntax.StAccess;
 import org.managarm.korona.syntax.StApply;
@@ -38,16 +40,6 @@ import org.managarm.korona.syntax.StRoot;
 public class Resolver {
 	// stores all symbols that are generated as part of this source file
 	private List<AuTerm> p_symbols = new ArrayList<AuTerm>();
-
-	private static class Overload {
-		private AuTerm function;
-		private AuTerm[] arguments;
-		
-		public Overload(AuTerm function, AuTerm[] arguments) {
-			this.function = function;
-			this.arguments = arguments;
-		}
-	}
 	
 	private Module p_rootModule = new Module(null, null); 
 	private Module p_thisModule;	
@@ -184,6 +176,9 @@ public class Resolver {
 			}else throw new AssertionError("No type or definition for "
 					+ root.getName());
 			
+			if(defn != null)
+				System.out.println(root.getName() + " := " + defn);
+			
 			Descriptor desc = new Descriptor(Descriptor.emptyRecord);
 			desc.setString(p_thisModule.getPath(), new RecordPath("module"));
 			desc.setString(root.getName(), new RecordPath("name"));
@@ -269,87 +264,58 @@ public class Resolver {
 		}else throw new RuntimeException("Illegal syntax node " + in);
 	}
 	
-	public void overload(AuTerm function, List<AuTerm> arguments,
-			List<Overload> res) {
-		int apply_arity = arguments.size();
+	public void overload2(AuTerm function, AuTerm argument,
+			List<AuTerm> res) {
+		AuPi ftype = (AuPi)function.type();
 		
-		List<Unificator.ImUnknown> unknowns
-				= new ArrayList<Unificator.ImUnknown>();
-		
-		// stores the "real" argument types of the function
-		// i.e. includes implicit arguments
-		List<AuTerm> unknown_args = new ArrayList<AuTerm>();
-		
-		// stores the mapping of "virtual" arguments to "real" arguments.
-		// each number is a negative offset to arg_types.size()
-		List<Integer> arg_mapping = new ArrayList<Integer>();
-		
-		int k = 0;
-		AuTerm res_type = function.type().reduce();
-		while(k < apply_arity) {
-			if(!(res_type instanceof AuPi))
-				return;
-			AuPi pi = (AuPi)res_type;
-
-			Unificator.ImUnknown unknown = new Unificator.ImUnknown();
-			AuTerm arg = mkOperator(unknown, pi.getBound());
-			
-			Descriptor annotation = new Descriptor(pi.getAnnotation());
-			if(annotation.asTerm() != null
-					&& annotation.getFlag(new RecordPath("fImplicit"))) {
-				unknown_args.add(arg);
-				arg_mapping.add(null);
-			}else{
-				unknown_args.add(arg);
-				arg_mapping.add(k);
-				k++;
-			}
-			unknowns.add(unknown);
-			res_type = pi.getCodomain().apply(0, arg);
-		}
-		int func_arity = unknown_args.size();
-		
-		AuTerm signature = function;
-				//mkOperator(Unificator.dummy, function.type().reduce());
-		for(int i = 0; i < func_arity; i++)
-			signature = mkApply(signature, unknown_args.get(i).reduce());
+		Unificator.ImUnknown unknown = new Unificator.ImUnknown();
+		AuTerm signature = mkApply(function,
+				mkOperator(unknown, ftype.getBound())).reduce();
 		
 		Unificator unificator = new Unificator(signature);
-		
-		// for each "real" argument unify the "virtual" function
-		// signature with the "real" argument type
-		for(int i = 0; i < apply_arity; i++) {
-			AuTerm instance = function; 
-					//mkOperator(Unificator.dummy, function.type().reduce());
-			for(int j = 0; j < func_arity; j++) {
-				Integer mapping = arg_mapping.get(j);
-				if(mapping != null && mapping == i) {
-					instance = mkApply(instance, arguments.get(i).reduce());
-				}else{
-					instance = mkApply(instance, mkOperator(Unificator.any,
-							mkOperator(Unificator.any, mkMeta())));
-				}
+		AuTerm instance = mkApply(function, argument).map(new TermMap() {
+			@Override public AuTerm map(AuTerm in) {
+				if(Unificator.ImUnknown.instance(in)) {
+					return mkOperator(Unificator.any,
+							mkOperator(Unificator.any, mkMeta()));
+				}else return in.map(this);
 			}
-			if(!unificator.unify(instance))
-				return;
+		}).reduce();
+		//System.out.println("Unify");
+		if(unificator.unify(instance)) {
+			res.add(unificator.getPrototype());
+		}else{
+			//System.out.println("Could not unify");
+			//System.out.println(signature);
+			//System.out.println(instance);
+		}
+	}
+	
+	public void overload(AuTerm function, List<AuTerm> arguments,
+			List<AuTerm> res) {
+		if(arguments.size() == 0) {
+			res.add(function);
+			return;
 		}
 		
-		// check if all implicit arguments could be determined	
-		AuTerm[] real_args = new AuTerm[func_arity];
-		for(int i = 0; i < func_arity; i++) {
-			if(arg_mapping.get(i) != null) {
-				int mapping = arg_mapping.get(i);
-				real_args[i] = arguments.get(mapping);
-			}else{
-				AuTerm value = unificator.getUnknown(unknowns.get(i));
-				if(value == null) {
-					System.out.println("Could not determine " + unknown_args.get(i));
-					return;
-				}
-				real_args[i] = value;
-			}
+		if(!(function.type() instanceof AuPi))
+			return;
+		AuPi ftype = (AuPi)function.type();
+		
+		Descriptor annotation = new Descriptor(ftype.getAnnotation());
+		if(annotation.asTerm() != null
+				&& annotation.getFlag(new RecordPath("fImplicit"))) {
+			Unificator.ImUnknown unknown = new Unificator.ImUnknown();
+			AuTerm signature = mkApply(function,
+					mkOperator(unknown, ftype.getBound()));
+			overload(signature, arguments, res);
+			return;
 		}
-		res.add(new Overload(function, real_args));
+		
+		List<AuTerm> partial_res = new ArrayList<AuTerm>();
+		overload2(function, arguments.get(0), partial_res);
+		for(AuTerm partial : partial_res)
+			overload(partial, arguments.subList(1, arguments.size()), res);
 	}
 	
 	public AuTerm buildApply(StNode function, List<AuTerm> arguments) {
@@ -367,7 +333,7 @@ public class Resolver {
 			if(resolved.size() == 0)
 				throw new RuntimeException("Could not resolve " + ident);
 			
-			List<Overload> overloads = new ArrayList<Overload>();
+			List<AuTerm> overloads = new ArrayList<AuTerm>();
 			for(AuTerm symbol : resolved)
 				overload(symbol, arguments, overloads);
 			
@@ -375,12 +341,7 @@ public class Resolver {
 				throw new RuntimeException("No valid overload for " + ident);
 			if(overloads.size() > 1)
 				throw new RuntimeException("Overload for " + ident + " is ambiguous");
-			
-			Overload overload = overloads.get(0);
-			AuTerm res = overload.function;
-			for(int i = 0; i < overload.arguments.length; i++)
-				res = mkApply(res, overload.arguments[i]);
-			return res;
+			return overloads.get(0);
 		}else{
 			AuTerm res = buildExpr(function);
 			for(int i = 0; i < arguments.size(); i++)

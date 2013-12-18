@@ -89,6 +89,12 @@ public class Unificator {
 			Result type_res = equalModAny(proto_term.type(), inst_term.type());
 			if(type_res == Result.kResDistinct)
 				return Result.kResDistinct;
+			if(type_res == Result.kResUnifiable)
+				return Result.kResUnifiable;
+			if(ImUnknown.instance(inst_term)
+				&& ((AuOperator)proto_term).getDescriptor()
+					== ((AuOperator)inst_term).getDescriptor())
+				return Result.kResEqual;
 			return Result.kResUnifiable;
 		}
 		
@@ -289,6 +295,13 @@ public class Unificator {
 	
 	public AuTerm getPrototype() { return p_prototype; }
 	public AuTerm getUnknown(ImUnknown unknown) { return p_unknowns.get(unknown); }
+	
+	public Unificator clone() {
+		Unificator clone = new Unificator(p_prototype);
+		for(Map.Entry<ImUnknown, AuTerm> entry : p_unknowns.entrySet())
+			clone.p_unknowns.put(entry.getKey(), entry.getValue());
+		return clone;
+	}
 	
 	public boolean unify(AuTerm instance) {
 		while(true) {

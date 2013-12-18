@@ -35,7 +35,7 @@ module Korona {
 	export (>>) := @implicit X:Meta => @implicit Y:Meta =>
 		m:(Mutator X) => f:(x:X -> (Mutator Y)) => Builtin.seq X Y m f;
 	export (>>) := @implicit T:Meta => first:(Mutator Nil) => second:(Mutator T) =>
-		first >> x:Nil => second;
+		first >> (x:Nil => second);
 	
 	export (chain) := p:(Mutator Nil) => q:(Mutator Nil) =>
 		Builtin.seq Nil Nil p (x:Nil => q);
@@ -74,8 +74,6 @@ module Korona {
 import Korona;
 
 module Test {
-	//export main := localAlloc x:(Local Int) =>
-	//	(localWrite x 43) >> (localRead x) >> (v:Int => print v);
-	export main := print (if 0 >= 0 then 1 else 0);
+	export main := print "Hello world!";
 }
 
