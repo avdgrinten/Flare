@@ -29,11 +29,11 @@ public class Parser {
 		number,
 		ident, charIdent, operatorIdent,
 		string,
-		specSemicolon, specEqual, specColonEqual, specDoubleEqual,
+		specSemicolon, specEqual, specColonEqual, specDoubleEqual, specInEqual,
 			specPlus, specMinus, specTimes, specSlash, specPercent,
 			specParL, specParR, specCurlyL, specCurlyR,
 			specDot, specColon, specDoubleColon, specQm,
-			specDoubleBar, specDoubleAnd, specLt, specDoubleLt, specDoubleGt,
+			specDoubleBar, specDoubleAnd, specLt, specGt, specLe, specGe, specDoubleLt, specDoubleGt,
 			specArrow, specDoubleArrow,
 		kwImport, kwModule, kwExport, kwExtern,
 		kwMeta, kwVar, kwIf, kwThen, kwElse, kwWhile, whileStm, kwReturn,
@@ -196,6 +196,8 @@ public class Parser {
 				PegParser.string(":=")), PegParser.forgetLeft));
 		g.setRule(Tag.specDoubleEqual, transform(sequence(g.ref(Tag.space),
 				PegParser.string("==")), PegParser.forgetLeft));
+		g.setRule(Tag.specInEqual, transform(sequence(g.ref(Tag.space),
+				PegParser.string("!=")), PegParser.forgetLeft));
 		g.setRule(Tag.specParL, transform(sequence(g.ref(Tag.space),
 				PegParser.singleChar('(')), PegParser.forgetLeft));
 		g.setRule(Tag.specParR, transform(sequence(g.ref(Tag.space),
@@ -214,6 +216,12 @@ public class Parser {
 				PegParser.singleChar('?')), PegParser.forgetLeft));
 		g.setRule(Tag.specLt, transform(sequence(g.ref(Tag.space),
 				PegParser.singleChar('<')), PegParser.forgetLeft));
+		g.setRule(Tag.specGt, transform(sequence(g.ref(Tag.space),
+				PegParser.singleChar('>')), PegParser.forgetLeft));
+		g.setRule(Tag.specLe, transform(sequence(g.ref(Tag.space),
+				PegParser.string("<=")), PegParser.forgetLeft));
+		g.setRule(Tag.specGe, transform(sequence(g.ref(Tag.space),
+				PegParser.string(">=")), PegParser.forgetLeft));
 		g.setRule(Tag.specDoubleLt, transform(sequence(g.ref(Tag.space),
 				PegParser.string("<<")), PegParser.forgetLeft));
 		g.setRule(Tag.specDoubleGt, transform(sequence(g.ref(Tag.space),
@@ -367,8 +375,9 @@ public class Parser {
 					return res;
 				}}));
 		g.setRule(Tag.compareExpr, transform(sequence(g.ref(Tag.shiftExpr),
-				repeat(sequence(choice(g.ref(Tag.specDoubleEqual),
-						g.ref(Tag.specLt)
+				repeat(sequence(choice(g.ref(Tag.specDoubleEqual), g.ref(Tag.specInEqual), 
+						g.ref(Tag.specLe), g.ref(Tag.specGe),
+						g.ref(Tag.specLt), g.ref(Tag.specGt)
 					), g.ref(Tag.shiftExpr)))),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
@@ -381,8 +390,16 @@ public class Parser {
 						StNode right = (StNode)((Object[])tail[i])[1];
 						if(operator.equals("==")) {
 							res = applyOperator("(==)", res, right);
+						}else if(operator.equals("!=")) {
+							res = applyOperator("(!=)", res, right);
+						}else if(operator.equals("<=")) {
+							res = applyOperator("(<=)", res, right);
+						}else if(operator.equals(">=")) {
+							res = applyOperator("(>=)", res, right);
 						}else if(operator.equals("<")) {
 							res = applyOperator("(<)", res, right);
+						}else if(operator.equals(">")) {
+							res = applyOperator("(>)", res, right);
 						}else throw new AssertionError("Illegal operator " + operator);
 					}
 					return res;

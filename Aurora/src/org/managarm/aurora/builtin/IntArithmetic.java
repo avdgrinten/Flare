@@ -117,6 +117,19 @@ public class IntArithmetic {
 			return mkConst(new Bool.BoolLit(x.compareTo(y) == 0));
 		}
 	};
+	public static AuOperator.Descriptor intInEq = new AuOperator.EvalDescriptor(
+			mkPi(mkConst(intType),
+			 mkPi(mkConst(intType),
+			  mkConst(Bool.boolType))), 2) {
+		@Override public String toString() { return "intInEq"; }
+		@Override protected AuTerm reduce(AuTerm[] args) {
+			if(!args[0].primitive() || !args[1].primitive())
+				return mkOperator(this, args);
+			BigInteger x = IntLit.extract(args[0]).getValue();
+			BigInteger y = IntLit.extract(args[1]).getValue();
+			return mkConst(new Bool.BoolLit(x.compareTo(y) != 0));
+		}
+	};
 	public static AuOperator.Descriptor intLt = new AuOperator.EvalDescriptor(
 			mkPi(mkConst(intType),
 			 mkPi(mkConst(intType),
@@ -128,6 +141,45 @@ public class IntArithmetic {
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) < 0));
+		}
+	};
+	public static AuOperator.Descriptor intGt = new AuOperator.EvalDescriptor(
+			mkPi(mkConst(intType),
+			 mkPi(mkConst(intType),
+			  mkConst(Bool.boolType))), 2) {
+		@Override public String toString() { return "intGt"; }
+		@Override protected AuTerm reduce(AuTerm[] args) {
+			if(!args[0].primitive() || !args[1].primitive())
+				return mkOperator(this, args);
+			BigInteger x = IntLit.extract(args[0]).getValue();
+			BigInteger y = IntLit.extract(args[1]).getValue();
+			return mkConst(new Bool.BoolLit(x.compareTo(y) > 0));
+		}
+	};
+	public static AuOperator.Descriptor intLe = new AuOperator.EvalDescriptor(
+			mkPi(mkConst(intType),
+			 mkPi(mkConst(intType),
+			  mkConst(Bool.boolType))), 2) {
+		@Override public String toString() { return "intLe"; }
+		@Override protected AuTerm reduce(AuTerm[] args) {
+			if(!args[0].primitive() || !args[1].primitive())
+				return mkOperator(this, args);
+			BigInteger x = IntLit.extract(args[0]).getValue();
+			BigInteger y = IntLit.extract(args[1]).getValue();
+			return mkConst(new Bool.BoolLit(x.compareTo(y) <= 0));
+		}
+	};
+	public static AuOperator.Descriptor intGe = new AuOperator.EvalDescriptor(
+			mkPi(mkConst(intType),
+			 mkPi(mkConst(intType),
+			  mkConst(Bool.boolType))), 2) {
+		@Override public String toString() { return "intGe"; }
+		@Override protected AuTerm reduce(AuTerm[] args) {
+			if(!args[0].primitive() || !args[1].primitive())
+				return mkOperator(this, args);
+			BigInteger x = IntLit.extract(args[0]).getValue();
+			BigInteger y = IntLit.extract(args[1]).getValue();
+			return mkConst(new Bool.BoolLit(x.compareTo(y) >= 0));
 		}
 	};
 

@@ -16,7 +16,13 @@ module Korona {
 	export (*) := x:Int => y:Int => Builtin.intMul x y;
 	export (/) := x:Int => y:Int => Builtin.intDiv x y;
 	export (%) := x:Int => y:Int => Builtin.intMod x y;
+	
 	export (==) := x:Int => y:Int => Builtin.intEq x y;
+	export (!=) := x:Int => y:Int => Builtin.intInEq x y;
+	export (<) := x:Int => y:Int => Builtin.intLt x y;
+	export (>) := x:Int => y:Int => Builtin.intGt x y;
+	export (<=) := x:Int => y:Int => Builtin.intLe x y;
+	export (>=) := x:Int => y:Int => Builtin.intGe x y;
 	
 	export (||) := p:Bool => q:Bool => Builtin.boolOr p q;
 	export (&&) := p:Bool => q:Bool => Builtin.boolAnd p q;
@@ -68,7 +74,8 @@ module Korona {
 import Korona;
 
 module Test {
-	export main := localAlloc x:(Local Int) =>
-		(localWrite x 42) >> (localRead x) >> (v:Int => print v);
+	//export main := localAlloc x:(Local Int) =>
+	//	(localWrite x 43) >> (localRead x) >> (v:Int => print v);
+	export main := print (if 0 >= 0 then 1 else 0);
 }
 
