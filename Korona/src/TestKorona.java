@@ -61,7 +61,12 @@ public class TestKorona {
 		resolver.addBuiltin(IntArithmetic.intDiv);
 		resolver.addBuiltin(IntArithmetic.intMod);
 		resolver.addBuiltin(IntArithmetic.intEq);
+		resolver.addBuiltin(IntArithmetic.intInEq);
 		resolver.addBuiltin(IntArithmetic.intFold);
+		resolver.addBuiltin(IntArithmetic.intLt);
+		resolver.addBuiltin(IntArithmetic.intGt);
+		resolver.addBuiltin(IntArithmetic.intLe);
+		resolver.addBuiltin(IntArithmetic.intGe);
 		resolver.addBuiltin(Strings.stringType);
 		resolver.addBuiltin(Products.projectL);
 		resolver.addBuiltin(Lists.listType);
