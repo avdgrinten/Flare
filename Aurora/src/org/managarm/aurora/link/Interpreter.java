@@ -48,7 +48,7 @@ public class Interpreter {
 	}
 	
 	public AuTerm execute(AuTerm term) {
-		if(term.isOperator(Mutation.lift)) {
+		if(term.isOperator(Mutation.embed)) {
 			AuOperator operator = (AuOperator)term;
 			return operator.getArgument(1);
 		}else if(term.isOperator(Mutation.seq)) {

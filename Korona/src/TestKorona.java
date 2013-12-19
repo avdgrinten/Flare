@@ -78,7 +78,7 @@ public class TestKorona {
 		resolver.addBuiltin(Anys.anyMeta);
 		resolver.addBuiltin(Anys.anyExtract);
 		resolver.addBuiltin(Mutation.mutatorType);
-		resolver.addBuiltin(Mutation.lift);
+		resolver.addBuiltin(Mutation.embed);
 		resolver.addBuiltin(Mutation.seq);
 		resolver.addBuiltin(Locals.localType);
 		resolver.addBuiltin(Locals.localAlloc);

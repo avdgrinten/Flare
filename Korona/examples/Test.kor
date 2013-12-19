@@ -30,8 +30,8 @@ module Korona {
 	export (ite) := @implicit T:Meta => c:Bool => t:T => e:T =>
 		Builtin.ite T c t e;
 	
-	export lift := @implicit T:Meta => x:T =>
-		Builtin.lift T x;
+	export embed := @implicit T:Meta => x:T =>
+		Builtin.embed T x;
 	export (>>) := @implicit X:Meta => @implicit Y:Meta =>
 		m:(Mutator X) => f:(x:X -> (Mutator Y)) => Builtin.seq X Y m f;
 	export (>>) := @implicit T:Meta => first:(Mutator Nil) => second:(Mutator T) =>
@@ -60,7 +60,7 @@ module Korona {
 		Builtin.print T x;
 	
 	export do := @implicit T:Meta => m:(Mutator T) =>
-		m >> result:T => lift nil;
+		m >> result:T => embed nil;
 	
 	export localAlloc := @implicit L:Meta => @implicit T:Meta =>
 			scope:(v:(Local L) -> Mutator T) =>
@@ -74,6 +74,10 @@ module Korona {
 import Korona;
 
 module Test {
-	export main := print "Hello world!";
+	export main := (localAlloc (l:(Local Int) =>
+		{
+			localWrite l 42;
+			print (localRead l) + (localRead l);
+		}));
 }
 

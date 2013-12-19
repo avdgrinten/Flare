@@ -19,18 +19,18 @@ public class Mutation {
 		}
 	};
 
-	public static class Lift extends AuOperator.GroundDescriptor {
-		public Lift() {
+	public static class Embed extends AuOperator.GroundDescriptor {
+		public Embed() {
 			super(mkPi(mkMeta(),
 				 mkPi(mkVar(0, mkMeta()),
 				  mkOperator(mutatorType, mkVar(1, mkMeta())))), 2);
 		}
-		@Override public String toString() { return "lift"; }
+		@Override public String toString() { return "embed"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
 			return mkOperator(this, args);
 		}
 	};
-	public static AuOperator.Descriptor lift = new Lift();
+	public static AuOperator.Descriptor embed = new Embed();
 
 
 	public static class Seq extends AuOperator.GroundDescriptor {

@@ -5,6 +5,7 @@ import static org.managarm.aurora.lang.AuTerm.mkConst;
 import static org.managarm.aurora.lang.AuTerm.mkMeta;
 import static org.managarm.aurora.lang.AuTerm.mkOperator;
 import static org.managarm.aurora.util.NamedTerm.mkNamedLambdaExt;
+import static org.managarm.aurora.util.NamedTerm.mkNamedLambda;
 import static org.managarm.aurora.util.NamedTerm.mkNamedPi;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.managarm.aurora.builtin.IntArithmetic;
+import org.managarm.aurora.builtin.Mutation;
 import org.managarm.aurora.builtin.Strings;
 import org.managarm.aurora.builtin.Symbols;
 import org.managarm.aurora.lang.AuConstant;
@@ -277,34 +279,96 @@ public class Resolver {
 		return mkApply(unified_func.getTerm(), argument);
 	}
 	
-	public void overload(AuTerm function, List<AuTerm> arguments,
+	public AuTerm mutateExtractType(AuTerm type) {
+		AuOperator operator = (AuOperator)type;
+		return operator.getArgument(0);
+	}
+	public AuTerm mutateRaise(AuTerm term, AuTerm argument,
+			NamedTerm.Name variable) {
+		AuTerm embedded = term;
+		if(!term.type().isOperator(Mutation.mutatorType))
+			embedded = mkOperator(Mutation.embed, term.type(), term);
+		
+		AuTerm arg_type = argument.type();
+		AuTerm input_type = mutateExtractType(arg_type);
+		AuTerm res_type = mutateExtractType(embedded.type());
+		
+		return mkOperator(Mutation.seq,
+				input_type, res_type, argument,
+				mkNamedLambda(variable, input_type, embedded));
+	}
+	
+	public void overload(Overload overload, List<AuTerm> arguments,
 			List<AuTerm> res) {
+		AuTerm term = overload.getTerm();
+		
 		if(arguments.size() == 0) {
-			if(!TermHelpers.anyTerm(function, new TermHelpers.Predicate() {
+			if(TermHelpers.anyTerm(term, new TermHelpers.Predicate() {
 					@Override public boolean test(AuTerm in) {
 						return Unificator.ImUnknown.instance(in);
 					}}))
-				res.add(function);
+				return;
+			
+			// apply lift operations to the function before we
+			// accept it as possible overload
+			AuTerm lifted = term;
+			for(int i = 0; i < overload.numLifts(); i++) {
+				Lift lift = overload.getLift(i);
+				lifted = mutateRaise(lifted, lift.getArgument(),
+						lift.getVariable());
+			}
+			res.add(lifted);
 			return;
 		}
 		
-		if(!(function.type() instanceof AuPi))
+		if(!(term.type() instanceof AuPi))
 			return;
-		AuPi ftype = (AuPi)function.type();
+		AuPi ftype = (AuPi)term.type();
+		AuTerm argument = arguments.get(0);
+		AuTerm argtype = argument.type();
 		
 		Descriptor annotation = new Descriptor(ftype.getAnnotation());
 		if(annotation.asTerm() != null
 				&& annotation.getFlag(new RecordPath("fImplicit"))) {
 			Unificator.ImUnknown unknown = new Unificator.ImUnknown();
-			AuTerm signature = mkApply(function,
-					mkOperator(unknown, ftype.getBound()));
-			overload(signature, arguments, res);
+
+			List<Lift> lifts = new ArrayList<Lift>();
+			for(int i = 0; i < overload.numLifts(); i++)
+				lifts.add(overload.getLift(i));
+			
+			Overload applied = new Overload(mkApply(term,
+					mkOperator(unknown, ftype.getBound())), lifts);
+			overload(applied, arguments, res);
 			return;
 		}
 		
-		AuTerm natural_res = unifyApply(function, arguments.get(0));
-		if(natural_res != null)
-			overload(natural_res, arguments.subList(1,  arguments.size()), res);
+		if(argtype.isOperator(Mutation.mutatorType)
+				&& !ftype.getBound().isOperator(Mutation.mutatorType)) {
+			AuTerm input_type = mutateExtractType(argtype);
+			NamedTerm.Name variable = new NamedTerm.Name();
+			
+			AuTerm lift_res = unifyApply(term,
+					mkOperator(variable, input_type));
+			if(lift_res != null) {
+				List<Lift> lifts = new ArrayList<Lift>();
+				for(int i = 0; i < overload.numLifts(); i++)
+					lifts.add(overload.getLift(i));
+				lifts.add(new Lift(argument, input_type, variable));
+
+				Overload applied = new Overload(lift_res, lifts);
+				overload(applied, arguments.subList(1,  arguments.size()), res);
+			}
+		}else{
+			AuTerm natural_res = unifyApply(term, argument);
+			if(natural_res != null) {
+				List<Lift> lifts = new ArrayList<Lift>();
+				for(int i = 0; i < overload.numLifts(); i++)
+					lifts.add(overload.getLift(i));
+				
+				Overload applied = new Overload(natural_res, lifts);
+				overload(applied, arguments.subList(1,  arguments.size()), res);
+			}
+		}
 	}
 	
 	public AuTerm buildApply(StNode function, List<AuTerm> arguments) {
@@ -324,7 +388,8 @@ public class Resolver {
 			
 			List<AuTerm> overloads = new ArrayList<AuTerm>();
 			for(AuTerm symbol : resolved)
-				overload(symbol, arguments, overloads);
+				overload(new Overload(symbol, Collections.<Lift>emptyList()),
+						arguments, overloads);
 			
 			if(overloads.size() == 0)
 				throw new RuntimeException("No valid overload for " + ident);
