@@ -52,7 +52,7 @@ public class Products {
 			return "product";
 		}
 		
-		@Override protected boolean reductive(AuTerm[] args) {
+		@Override protected boolean reducible(AuTerm[] args) {
 			return false;
 		}
 		@Override protected boolean primitive(AuTerm[] args) {

@@ -14,7 +14,7 @@ public class InternalRef extends AuOperator.Descriptor {
 			mkVar(0, mkMeta())), 1);
 	}
 	
-	@Override protected boolean reductive(AuTerm[] args) {
+	@Override protected boolean reducible(AuTerm[] args) {
 		return false;
 	}
 	@Override protected boolean primitive(AuTerm[] args) {

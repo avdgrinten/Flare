@@ -96,7 +96,7 @@ public abstract class AuTerm {
 			derived = codomain.apply(0, arguments[i]);
 		}
 		
-		if(descriptor.reductive(arguments))
+		if(descriptor.reducible(arguments))
 			return descriptor.reduce(arguments);
 		return new AuOperator(annotation, descriptor, arguments);
 	}

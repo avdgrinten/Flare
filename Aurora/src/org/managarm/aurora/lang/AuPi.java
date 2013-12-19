@@ -2,19 +2,19 @@ package org.managarm.aurora.lang;
 
 
 public final class AuPi extends AuTerm {
-	private AuTerm bound;
-	private AuTerm codomain; 
+	private AuTerm p_bound;
+	private AuTerm p_codomain; 
 	
 	AuPi(AuTerm annotation, AuTerm bound, AuTerm codomain) {
 		super(annotation);
-		this.bound = bound;
-		this.codomain = codomain;
+		this.p_bound = bound;
+		this.p_codomain = codomain;
 	}
 	public AuTerm getBound() {
-		return bound;
+		return p_bound;
 	}
 	public AuTerm getCodomain() {
-		return codomain;
+		return p_codomain;
 	}
 	
 	public String toStringExt() {
@@ -24,12 +24,12 @@ public final class AuPi extends AuTerm {
 			str.append(this.getAnnotation());
 			str.append(' ');
 		}
-		str.append(bound);
+		str.append(p_bound);
 		str.append(" -> ");
-		if(codomain instanceof AuPi) {
-			str.append(((AuPi)codomain).toStringExt());
+		if(p_codomain instanceof AuPi) {
+			str.append(((AuPi)p_codomain).toStringExt());
 		}else{
-			str.append(codomain);
+			str.append(p_codomain);
 		}
 		return str.toString();
 	}
@@ -37,14 +37,14 @@ public final class AuPi extends AuTerm {
 		return "(" + toStringExt() + ")";
 	}
 	@Override public int hashCode() {
-		return bound.hashCode() + codomain.hashCode();
+		return p_bound.hashCode() + p_codomain.hashCode();
 	}
 	@Override public boolean equals(Object object) {
 		if(!(object instanceof AuPi))
 			return false;
 		AuPi other = (AuPi)object;
-		return bound.equals(other.bound)
-				&& codomain.equals(other.codomain);
+		return p_bound.equals(other.p_bound)
+				&& p_codomain.equals(other.p_codomain);
 	}
 
 	@Override public AuTerm type() {
@@ -55,20 +55,20 @@ public final class AuPi extends AuTerm {
 	}
 	@Override public AuTerm apply(int depth, AuTerm term) {
 		return mkPiExt(this.getAnnotation(),
-				bound.apply(depth, term),
-				codomain.apply(depth + 1, term));
+				p_bound.apply(depth, term),
+				p_codomain.apply(depth + 1, term));
 	}
 	@Override public AuTerm embed(int embed_depth, int limit) {
 		return mkPiExt(this.getAnnotation(),
-				bound.embed(embed_depth, limit),
-				codomain.embed(embed_depth, limit + 1));
+				p_bound.embed(embed_depth, limit),
+				p_codomain.embed(embed_depth, limit + 1));
 	}
 	@Override public boolean verifyVariable(int depth, AuTerm type) {
-		return bound.verifyVariable(depth, type)
-				&& codomain.verifyVariable(depth + 1, type.embed(1, 0));
+		return p_bound.verifyVariable(depth, type)
+				&& p_codomain.verifyVariable(depth + 1, type.embed(1, 0));
 	}
 	@Override public boolean verifyClosed(int max_depth) {
-		return bound.verifyClosed(max_depth)
-				&& codomain.verifyClosed(max_depth + 1);
+		return p_bound.verifyClosed(max_depth)
+				&& p_codomain.verifyClosed(max_depth + 1);
 	}
 }

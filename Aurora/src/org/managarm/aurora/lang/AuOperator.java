@@ -4,22 +4,22 @@ import java.util.Arrays;
 
 public final class AuOperator extends AuTerm {
 	public static abstract class Descriptor {
-		private int arity;
-		private AuTerm signature;
+		private int p_arity;
+		private AuTerm p_signature;
 		
 		public Descriptor(AuTerm type, int arity) {
-			this.arity = arity;
-			this.signature = type;
+			this.p_arity = arity;
+			this.p_signature = type;
 		}
 		public int getArity() {
-			return arity;
+			return p_arity;
 		}
 		public AuTerm getSignature() {
-			return signature;
+			return p_signature;
 		}
-		
-		protected abstract boolean reductive(AuTerm[] args);
+
 		protected abstract boolean primitive(AuTerm[] args);
+		protected abstract boolean reducible(AuTerm[] args);
 		protected abstract AuTerm reduce(AuTerm[] args);
 	}
 
@@ -28,7 +28,7 @@ public final class AuOperator extends AuTerm {
 			super(type, arity);
 		}
 		
-		protected boolean reductive(AuTerm[] args) {
+		protected boolean reducible(AuTerm[] args) {
 			for(int i = 0; i < args.length; i++)
 				if(!args[i].primitive())
 					return false;
@@ -43,7 +43,7 @@ public final class AuOperator extends AuTerm {
 			super(type, arity);
 		}
 		
-		protected boolean reductive(AuTerm[] args) {
+		protected boolean reducible(AuTerm[] args) {
 			return false;
 		}
 		protected boolean primitive(AuTerm[] args) {
@@ -76,78 +76,78 @@ public final class AuOperator extends AuTerm {
 		return defn;
 	}
 	
-	private Descriptor descriptor;
-	private AuTerm[] arguments;
+	private Descriptor p_descriptor;
+	private AuTerm[] p_arguments;
 	
 	AuOperator(AuTerm annotation,
 			Descriptor descriptor, AuTerm[] arguments) {
 		super(annotation);
-		this.descriptor = descriptor;
-		this.arguments = arguments;
+		this.p_descriptor = descriptor;
+		this.p_arguments = arguments;
 	}
 	public Descriptor getDescriptor() {
-		return descriptor;
+		return p_descriptor;
 	}
 	public int numArguments() {
-		return arguments.length;
+		return p_arguments.length;
 	}
 	public AuTerm getArgument(int i) {
-		return arguments[i];
+		return p_arguments[i];
 	}
 	
 	@Override public String toString() {
-		String string = descriptor.toString() + "[";
-		for(int i = 0; i < arguments.length; i++) {
+		String string = p_descriptor.toString() + "[";
+		for(int i = 0; i < p_arguments.length; i++) {
 			if(i > 0)
 				string += ", ";
-			string += arguments[i];
+			string += p_arguments[i];
 		}
 		return string + "]";
 	}
 	@Override public int hashCode() {
-		return descriptor.hashCode()
-				+ Arrays.hashCode(arguments);
+		return p_descriptor.hashCode()
+				+ Arrays.hashCode(p_arguments);
 	}
 	@Override public boolean equals(Object object) {
 		if(!(object instanceof AuOperator))
 			return false;
 		AuOperator other = (AuOperator)object;
-		return descriptor.equals(other.descriptor)
-				&& Arrays.equals(arguments, other.arguments);
+		return p_descriptor.equals(other.p_descriptor)
+				&& Arrays.equals(p_arguments, other.p_arguments);
 	}
 
 	@Override public AuTerm type() {
-		AuTerm derived = descriptor.signature;
-		for(int i = 0; i < descriptor.arity; i++) {
+		AuTerm derived = p_descriptor.p_signature;
+		for(int i = 0; i < p_descriptor.p_arity; i++) {
 			AuPi pi = (AuPi)derived;
 			AuTerm codomain = pi.getCodomain();
-			derived = codomain.apply(0, arguments[i]);
+			derived = codomain.apply(0, p_arguments[i]);
 		}
 		return derived;
 	}
 	@Override public boolean primitive() {
-		return descriptor.primitive(arguments);
+		return p_descriptor.primitive(p_arguments);
 	}
 	@Override public AuTerm apply(int depth, AuTerm term) {
-		AuTerm[] new_args = new AuTerm[arguments.length];
-		for(int i = 0; i < arguments.length; i++)
-			new_args[i] = arguments[i].apply(depth, term);
-		return mkOperatorExt(this.getAnnotation(), descriptor, new_args);
+		AuTerm[] new_args = new AuTerm[p_arguments.length];
+		for(int i = 0; i < p_arguments.length; i++)
+			new_args[i] = p_arguments[i].apply(depth, term);
+		return mkOperatorExt(this.getAnnotation(), p_descriptor, new_args);
 	}
 	@Override public AuTerm embed(int embed_depth, int limit) {
-		AuTerm[] new_args = new AuTerm[arguments.length];
-		for(int i = 0; i < arguments.length; i++)
-			new_args[i] = arguments[i].embed(embed_depth, limit);
-		return mkOperatorExt(this.getAnnotation(), descriptor, new_args);
+		AuTerm[] new_args = new AuTerm[p_arguments.length];
+		for(int i = 0; i < p_arguments.length; i++)
+			new_args[i] = p_arguments[i].embed(embed_depth, limit);
+		return mkOperatorExt(this.getAnnotation(), p_descriptor, new_args);
 	}
 	@Override public boolean verifyVariable(int depth, AuTerm type) {
-		for(AuTerm argument : arguments)
+		for(AuTerm argument : p_arguments)
 			if(!argument.verifyVariable(depth, type))
 				return false;
 		return true;
 	}
 	@Override public boolean verifyClosed(int max_depth) {
-		for(AuTerm argument : arguments)
+		for(AuTerm argument : p_arguments)
 			if(!argument.verifyClosed(max_depth))
 				return false;
 		return true;

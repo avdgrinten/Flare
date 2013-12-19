@@ -45,7 +45,7 @@ public abstract class NamedTerm {
 			return "name{" + System.identityHashCode(this) + "}";
 		}
 		
-		@Override protected boolean reductive(AuTerm[] args) {
+		@Override protected boolean reducible(AuTerm[] args) {
 			return false;
 		}
 		@Override protected boolean primitive(AuTerm[] args) {

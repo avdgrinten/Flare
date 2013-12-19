@@ -33,7 +33,7 @@ public class Unificator {
 			return "imUnknown{" + System.identityHashCode(this) + "}";
 		}
 		
-		@Override protected boolean reductive(AuTerm[] args) {
+		@Override protected boolean reducible(AuTerm[] args) {
 			return false;
 		}
 		@Override protected boolean primitive(AuTerm[] args) {
@@ -48,7 +48,7 @@ public class Unificator {
 		@Override public String toString() {
 			return "any";
 		}
-		@Override protected boolean reductive(AuTerm[] args) {
+		@Override protected boolean reducible(AuTerm[] args) {
 			return false;
 		}
 		@Override protected boolean primitive(AuTerm[] args) {
@@ -63,7 +63,7 @@ public class Unificator {
 		@Override public String toString() {
 			return "dummy";
 		}
-		@Override protected boolean reductive(AuTerm[] args) {
+		@Override protected boolean reducible(AuTerm[] args) {
 			return false;
 		}
 		@Override protected boolean primitive(AuTerm[] args) {

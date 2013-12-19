@@ -36,7 +36,7 @@ public class Interpreter {
 			p_data.value = value;
 		}
 
-		@Override protected boolean reductive(AuTerm[] args) {
+		@Override protected boolean reducible(AuTerm[] args) {
 			return false;
 		}
 		@Override protected boolean primitive(AuTerm[] args) {
