@@ -1,6 +1,7 @@
 package org.managarm.aurora.util;
 
 import static org.managarm.aurora.lang.AuTerm.mkConst;
+import static org.managarm.aurora.lang.AuTerm.mkOperator;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -17,7 +18,9 @@ import org.managarm.aurora.lang.AuTerm;
 
 public class Descriptor {
 	public static final AuTerm emptyRecord
-			= Lists.utilEmpty(mkConst(Anys.anyType));
+			= Lists.utilEmpty(mkOperator(Products.productType,
+					mkConst(Strings.stringType),
+					mkConst(Anys.anyType)));
 	
 	public abstract static class Path {
 		public abstract AuTerm get(AuTerm descriptor);
@@ -33,20 +36,19 @@ public class Descriptor {
 		@Override public AuTerm get(AuTerm descriptor) {
 			for(int i = 0; i < Lists.utilLen(descriptor); i++) {
 				AuTerm item = Lists.utilElem(descriptor, i);
-				AuTerm entry = Anys.utilExtract(item);
-				AuTerm key_term = Products.utilProjectL(entry);
+				AuTerm key_term = Products.utilProjectL(item);
 				String key = Strings.StringLit.extract(key_term).getValue();
 				if(!key.equals(p_ident))
 					continue;
-				AuTerm value_term = Products.utilProjectR(entry);
-				return value_term;
+				AuTerm value_term = Products.utilProjectR(item);
+				return Anys.utilExtract(value_term);
 			}
 			return null;
 		}
 		@Override public AuTerm set(AuTerm descriptor, AuTerm term) {
 			AuTerm key_term = mkConst(new Strings.StringLit(p_ident));
-			AuTerm entry = Products.utilProduct(key_term, term);
-			AuTerm item = Anys.utilBox(entry);
+			AuTerm value_term = Anys.utilBox(term);
+			AuTerm item = Products.utilProduct(key_term, value_term);
 			return Lists.utilAppend(descriptor, item);
 		}
 	}

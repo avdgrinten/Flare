@@ -2,6 +2,8 @@ package org.managarm.aurora.lang;
 
 
 public abstract class AuTerm {
+	public static boolean verifyWellformed = false;
+	
 	public static AuMeta mkMeta() {
 		return mkMetaExt(null);
 	}
@@ -14,8 +16,10 @@ public abstract class AuTerm {
 	}
 	public static AuVar mkVarExt(AuTerm annotation,
 			int depth, AuTerm type) {
-		if(!type.type().equals(mkMeta()))
-			throw new RuntimeException("Illegal type");
+		if(verifyWellformed) {
+			if(!type.type().equals(mkMeta()))
+				throw new RuntimeException("Illegal type");
+		}
 		
 		return new AuVar(annotation, depth, type);
 	}
@@ -25,11 +29,13 @@ public abstract class AuTerm {
 	}
 	public static AuLambda mkLambdaExt(AuTerm annotation,
 			AuTerm bound, AuTerm expr) {
-		if(!bound.type().equals(mkMeta()))
-			throw new RuntimeException("Illegal type");
-		if(!expr.verifyVariable(0, bound.embed(1, 0)))
-			throw new RuntimeException("Variable type mismatch");
-			
+		if(verifyWellformed) {
+			if(!bound.type().equals(mkMeta()))
+				throw new RuntimeException("Illegal type");
+			if(!expr.verifyVariable(0, bound.embed(1, 0)))
+				throw new RuntimeException("Variable type mismatch");
+		}
+		
 		return new AuLambda(annotation, bound, expr);
 	}
 	
@@ -38,10 +44,12 @@ public abstract class AuTerm {
 	}
 	public static AuPi mkPiExt(AuTerm annotation,
 			AuTerm bound, AuTerm codomain) {
-		if(!bound.type().equals(mkMeta()))
-			throw new RuntimeException("Illegal type");
-		if(!codomain.verifyVariable(0, bound.embed(1, 0)))
-			throw new RuntimeException("Variable type mismatch");
+		if(verifyWellformed) {
+			if(!bound.type().equals(mkMeta()))
+				throw new RuntimeException("Illegal type");
+			if(!codomain.verifyVariable(0, bound.embed(1, 0)))
+				throw new RuntimeException("Variable type mismatch");
+		}
 		
 		return new AuPi(annotation, bound, codomain);
 	}
@@ -51,14 +59,16 @@ public abstract class AuTerm {
 	}
 	public static AuTerm mkApplyExt(AuTerm annotation,
 			AuTerm function, AuTerm argument) {
-		AuTerm func_type = function.type();
-		if(!(func_type instanceof AuPi))
-			throw new RuntimeException("Illegal function type: " + function);
-		AuPi pi = (AuPi)func_type;
-		if(!pi.getBound().equals(argument.type()))
-			throw new RuntimeException("Function argument type mismatch."
-					+ " Expected " +  pi.getBound()
-					+ ", received " + argument.type());
+		if(verifyWellformed) {
+			AuTerm func_type = function.type();
+			if(!(func_type instanceof AuPi))
+				throw new RuntimeException("Illegal function type: " + function);
+			AuPi pi = (AuPi)func_type;
+			if(!pi.getBound().equals(argument.type()))
+				throw new RuntimeException("Function argument type mismatch."
+						+ " Expected " +  pi.getBound()
+						+ ", received " + argument.type());
+		}
 		
 		if(function.primitive()) {
 			AuLambda lambda = (AuLambda)function;
@@ -81,19 +91,21 @@ public abstract class AuTerm {
 	public static AuTerm mkOperatorExt(AuTerm annotation,
 			AuOperator.Descriptor descriptor,
 			AuTerm... arguments) {
-		if(arguments.length != descriptor.getArity())
-			throw new RuntimeException("Operator arity mismatch");
-		
-		AuTerm derived = descriptor.getSignature();
-		for(int i = 0; i < descriptor.getArity(); i++) {
-			AuPi pi = (AuPi)derived;
-			if(!pi.getBound().equals(arguments[i].type()))
-				throw new RuntimeException("Operator argument type mismatch."
-						+ " Expected " + pi.getBound()
-						+ ", received " + arguments[i].type());
+		if(verifyWellformed) {
+			if(arguments.length != descriptor.getArity())
+				throw new RuntimeException("Operator arity mismatch");
 			
-			AuTerm codomain = pi.getCodomain();
-			derived = codomain.apply(0, arguments[i]);
+			AuTerm derived = descriptor.getSignature();
+			for(int i = 0; i < descriptor.getArity(); i++) {
+				AuPi pi = (AuPi)derived;
+				if(!pi.getBound().equals(arguments[i].type()))
+					throw new RuntimeException("Operator argument type mismatch."
+							+ " Expected " + pi.getBound()
+							+ ", received " + arguments[i].type());
+				
+				AuTerm codomain = pi.getCodomain();
+				derived = codomain.apply(0, arguments[i]);
+			}
 		}
 		
 		if(descriptor.reducible(arguments))
