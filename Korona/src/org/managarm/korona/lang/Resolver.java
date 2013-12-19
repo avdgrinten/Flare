@@ -6,7 +6,6 @@ import static org.managarm.aurora.lang.AuTerm.mkMeta;
 import static org.managarm.aurora.lang.AuTerm.mkOperator;
 import static org.managarm.aurora.util.NamedTerm.mkNamedLambdaExt;
 import static org.managarm.aurora.util.NamedTerm.mkNamedPi;
-import static org.managarm.aurora.util.NamedTerm.mkNamedVar;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,7 +64,7 @@ public class Resolver {
 			Scope.BindScope scope = (Scope.BindScope)item;
 			if(!scope.getName().equals(identifier))
 				continue;
-			res.add(mkNamedVar(scope.getUid(), scope.getType()));
+			res.add(mkOperator(scope.getDescriptor(), scope.getType()));
 		}
 	}
 	private void resolveExtern(String identifier,
@@ -199,7 +198,7 @@ public class Resolver {
 		}else if(in instanceof StLambda) {
 			StLambda expr = (StLambda)in;
 			
-			KorUid arg_uid = new KorUid();
+			NamedTerm.Name descriptor = new NamedTerm.Name();
 			AuTerm type = buildExpr(expr.getArgument().type());
 			Descriptor annotation = new Descriptor(Descriptor.emptyRecord);
 			annotation.setFlag(expr.getImplicit(), new RecordPath("fImplicit"));
@@ -209,23 +208,23 @@ public class Resolver {
 				annotate_term = null;
 			
 			pushScope(new Scope.BindScope(expr.getArgument().ident(),
-					arg_uid, type));
-			AuTerm res = mkNamedLambdaExt(annotate_term, arg_uid, type,
+					type, descriptor));
+			AuTerm res = mkNamedLambdaExt(annotate_term, descriptor, type,
 					buildExpr(expr.getExpr()));
 			popScope();
-			return NamedTerm.resolve(res);
+			return res;
 		}else if(in instanceof StPi) {
 			StPi expr = (StPi)in;
-			
-			KorUid arg_uid = new KorUid();
+
+			NamedTerm.Name descriptor = new NamedTerm.Name();
 			AuTerm type = buildExpr(expr.getArgument().type());
 			
 			pushScope(new Scope.BindScope(expr.getArgument().ident(),
-					arg_uid, type));
-			AuTerm res = mkNamedPi(new KorUid(), type,
+					type, descriptor));
+			AuTerm res = mkNamedPi(descriptor, type,
 					buildExpr(expr.getCodomain()));
 			popScope();
-			return NamedTerm.resolve(res);
+			return res;
 		}else if(in instanceof StApply) {
 			return buildApply(in, Collections.<AuTerm>emptyList());
 		}else if(in instanceof StLiteral.LitInt) {

@@ -136,15 +136,6 @@ public class Unificator {
 				return Result.kResDistinct;
 			return equalModAny(prototype.getType(),
 					instance.getType());
-		}else if(proto_term instanceof NamedVar) {
-			if(!(inst_term instanceof NamedVar))
-				return Result.kResDistinct;
-			NamedVar prototype = (NamedVar)proto_term;
-			NamedVar instance = (NamedVar)inst_term;
-			if(!prototype.getName().equals(instance.getName()))
-				return Result.kResDistinct;
-			return equalModAny(prototype.getType(),
-					instance.getType());
 		}else if(proto_term instanceof AuLambda) {
 			if(!(inst_term instanceof AuLambda))
 				return Result.kResDistinct;
@@ -239,15 +230,6 @@ public class Unificator {
 			AuVar instance = (AuVar)inst_term;
 			
 			if(prototype.getDepth() != instance.getDepth())
-				throw new AssertionError("Terms are distinct");
-			return findDisagreement(prototype.getType(), instance.getType());
-		}else if(proto_term instanceof NamedVar) {
-			if(!(inst_term instanceof NamedVar))
-				throw new AssertionError("Terms are distinct");
-			NamedVar prototype = (NamedVar)proto_term;
-			NamedVar instance = (NamedVar)inst_term;
-			
-			if(prototype.getName().equals(instance.getName()))
 				throw new AssertionError("Terms are distinct");
 			return findDisagreement(prototype.getType(), instance.getType());
 		}else if(proto_term instanceof AuPi) {

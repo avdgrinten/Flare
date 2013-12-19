@@ -5,7 +5,6 @@ import static org.managarm.aurora.lang.AuTerm.mkLambdaExt;
 import static org.managarm.aurora.lang.AuTerm.mkOperatorExt;
 import static org.managarm.aurora.lang.AuTerm.mkPiExt;
 import static org.managarm.aurora.lang.AuTerm.mkVarExt;
-import static org.managarm.aurora.util.NamedTerm.mkNamedVarExt;
 
 import org.managarm.aurora.lang.AuApply;
 import org.managarm.aurora.lang.AuConstant;
@@ -32,9 +31,6 @@ public class TermHelpers {
 			return false;
 		}else if(in instanceof AuVar) {
 			AuVar term = (AuVar)in;
-			return anyTerm(term.getType(), pred);
-		}else if(in instanceof NamedVar) {
-			NamedVar term = (NamedVar)in;
 			return anyTerm(term.getType(), pred);
 		}else if(in instanceof AuPi) {
 			AuPi term = (AuPi)in;
@@ -66,10 +62,6 @@ public class TermHelpers {
 			AuVar term = (AuVar)in;
 			return mkVarExt(term.getAnnotation(), term.getDepth(),
 					func.map(term.getType()));
-		}else if(in instanceof NamedVar) {
-			NamedVar term = (NamedVar)in;
-			return mkNamedVarExt(term.getAnnotation(),
-					term.getName(), func.map(term.getType()));
 		}else if(in instanceof AuPi) {
 			AuPi term = (AuPi)in;
 			return mkPiExt(term.getAnnotation(),

@@ -1,26 +1,28 @@
 package org.managarm.korona.lang;
 
 import org.managarm.aurora.lang.AuTerm;
+import org.managarm.aurora.util.NamedTerm;
 
 public class Scope {
 	public static class BindScope extends Scope {
 		private String p_name;
-		private KorUid p_uid;
 		private AuTerm p_type;
+		private NamedTerm.Name p_descriptor;
 		
-		public BindScope(String name, KorUid uid, AuTerm type) {
+		public BindScope(String name, AuTerm type,
+				NamedTerm.Name descriptor) {
 			p_name = name;
-			p_uid = uid;
 			p_type = type;
+			p_descriptor = descriptor;
 		}
 		public String getName() {
 			return p_name;
 		}
-		public KorUid getUid() {
-			return p_uid;
-		}
 		public AuTerm getType() {
 			return p_type;
+		}
+		public NamedTerm.Name getDescriptor() {
+			return p_descriptor;
 		}
 	}
 }
