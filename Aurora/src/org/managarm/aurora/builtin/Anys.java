@@ -15,7 +15,7 @@ public class Anys {
 		return mkOperator(any, value.type(), value);
 	}
 	public static AuTerm utilExtract(AuTerm any) {
-		return mkOperator(anyExtract, any).reduce();
+		return mkOperator(anyExtract, any);
 	}
 	
 	public static AuConstant.Descriptor anyType = new AuConstant.Descriptor(
@@ -33,6 +33,9 @@ public class Anys {
 			return "any";
 		}
 
+		@Override protected boolean reductive(AuTerm[] args) {
+			return false;
+		}
 		@Override protected boolean primitive(AuTerm[] args) {
 			return true;
 		}

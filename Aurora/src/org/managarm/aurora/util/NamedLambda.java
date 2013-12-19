@@ -23,28 +23,11 @@ public class NamedLambda extends NamedTerm {
 	public AuTerm getExpr() {
 		return expr;
 	}
-
-	@Override public AuTerm map(TermMap fun) {
-		return new NamedLambda(this.getAnnotation(),
-				name, fun.map(bound), fun.map(expr));
-	}
-	@Override public AuTerm replace(AuTerm subterm, AuTerm replacement) {
-		if(this.equals(subterm))
-			return replacement;
-		return new NamedLambda(this.getAnnotation(),
-				name, bound.replace(subterm, replacement),
-				expr.replace(subterm, replacement));
-	}
-	@Override public boolean wellformed() {
-		throw new UnsupportedOperationException();
-	}
+	
 	@Override public AuTerm type() {
 		return mkNamedPi(name, bound, expr.type());
 	}
 	@Override public boolean primitive() {
-		throw new UnsupportedOperationException();
-	}
-	@Override public AuTerm reduce() {
 		throw new UnsupportedOperationException();
 	}
 	@Override public AuTerm embed(int embed_depth, int limit) {

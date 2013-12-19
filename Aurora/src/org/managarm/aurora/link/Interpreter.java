@@ -36,6 +36,9 @@ public class Interpreter {
 			p_data.value = value;
 		}
 
+		@Override protected boolean reductive(AuTerm[] args) {
+			return false;
+		}
 		@Override protected boolean primitive(AuTerm[] args) {
 			return false;
 		}
@@ -52,7 +55,7 @@ public class Interpreter {
 			AuOperator operator = (AuOperator)term;
 			AuTerm pred = execute(operator.getArgument(2));
 			AuTerm res = mkApply(operator.getArgument(3), pred);
-			return execute(res.reduce());
+			return execute(res);
 		}else if(term.isOperator(Locals.localAlloc)) {
 			AuOperator operator = (AuOperator)term;
 			AuTerm type = operator.getArgument(0);
@@ -62,7 +65,7 @@ public class Interpreter {
 			InternalRef ref = new InternalRef(data);
 			
 			return execute(mkApply(scope, mkOperator(ref,
-					mkOperator(Locals.localType, type))).reduce());
+					mkOperator(Locals.localType, type))));
 		}else if(term.isOperator(Locals.localWrite)) {
 			AuOperator operator = (AuOperator)term;
 			InternalRef ref = InternalRef.extract(operator.getArgument(1));

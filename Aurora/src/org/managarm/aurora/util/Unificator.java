@@ -1,12 +1,9 @@
 package org.managarm.aurora.util;
 
-import static org.managarm.aurora.lang.AuTerm.mkPi;
 import static org.managarm.aurora.lang.AuTerm.mkMeta;
-import static org.managarm.aurora.lang.AuTerm.mkVar;
 import static org.managarm.aurora.lang.AuTerm.mkOperator;
-
-import java.util.HashMap;
-import java.util.Map;
+import static org.managarm.aurora.lang.AuTerm.mkPi;
+import static org.managarm.aurora.lang.AuTerm.mkVar;
 
 import org.managarm.aurora.lang.AuApply;
 import org.managarm.aurora.lang.AuConstant;
@@ -35,6 +32,10 @@ public class Unificator {
 		@Override public String toString() {
 			return "imUnknown{" + System.identityHashCode(this) + "}";
 		}
+		
+		@Override protected boolean reductive(AuTerm[] args) {
+			return false;
+		}
 		@Override protected boolean primitive(AuTerm[] args) {
 			return false;
 		}
@@ -46,6 +47,9 @@ public class Unificator {
 			 mkVar(0, mkMeta())), 1) {
 		@Override public String toString() {
 			return "any";
+		}
+		@Override protected boolean reductive(AuTerm[] args) {
+			return false;
 		}
 		@Override protected boolean primitive(AuTerm[] args) {
 			return false;
@@ -59,6 +63,9 @@ public class Unificator {
 		@Override public String toString() {
 			return "dummy";
 		}
+		@Override protected boolean reductive(AuTerm[] args) {
+			return false;
+		}
 		@Override protected boolean primitive(AuTerm[] args) {
 			return false;
 		}
@@ -67,6 +74,24 @@ public class Unificator {
 		}
 	};
 	
+	public static interface Observer {
+		public void onReplace(AuOperator unknown, AuTerm value);
+	}
+	public static class ReplaceObserver implements Observer {
+		private AuTerm p_term;
+
+		public ReplaceObserver(AuTerm term) {
+			p_term = term;
+		}
+		public AuTerm getTerm() {
+			return p_term;
+		}
+		
+		@Override public void onReplace(AuOperator unknown, AuTerm value) {
+			p_term = TermHelpers.replace(p_term, unknown, value);
+		}
+	}
+	
 	public enum Result {
 		kResEqual,
 		kResUnifiable,
@@ -74,9 +99,9 @@ public class Unificator {
 	}
 	
 	public static class Disagreement {
-		public AuTerm prototype;
+		public AuOperator prototype;
 		public AuTerm instance;
-		public Disagreement(AuTerm prototype, AuTerm instance) {
+		public Disagreement(AuOperator prototype, AuTerm instance) {
 			this.prototype = prototype;
 			this.instance = instance;
 		}
@@ -204,7 +229,7 @@ public class Unificator {
 			if(type_res == Result.kResUnifiable)
 				return findDisagreement(proto_term.type(), inst_term.type());
 			
-			return new Disagreement(proto_term, inst_term);
+			return new Disagreement((AuOperator)proto_term, inst_term);
 		}
 		
 		if(proto_term instanceof AuVar) {
@@ -286,24 +311,27 @@ public class Unificator {
 		}else throw new RuntimeException("Illegal term " + proto_term);
 	}
 	
+	public static AuTerm unknownToIndef(AuTerm in) {
+		TermHelpers.Map function = new TermHelpers.Map() {
+			@Override public AuTerm map(AuTerm in) {
+				if(ImUnknown.instance(in)) {
+					AuOperator operator = (AuOperator)in;
+					return mkOperator(Unificator.any, operator.getArgument(0));
+				}else return TermHelpers.defaultMap(in, this);
+			}
+		};
+		return function.map(in);
+	}
+	
 	private AuTerm p_prototype;
-	private Map<ImUnknown, AuTerm> p_unknowns = new HashMap<ImUnknown, AuTerm>();
 	
 	public Unificator(AuTerm prototype) {
 		p_prototype = prototype;
 	}
 	
 	public AuTerm getPrototype() { return p_prototype; }
-	public AuTerm getUnknown(ImUnknown unknown) { return p_unknowns.get(unknown); }
 	
-	public Unificator clone() {
-		Unificator clone = new Unificator(p_prototype);
-		for(Map.Entry<ImUnknown, AuTerm> entry : p_unknowns.entrySet())
-			clone.p_unknowns.put(entry.getKey(), entry.getValue());
-		return clone;
-	}
-	
-	public boolean unify(AuTerm instance) {
+	public boolean unify(AuTerm instance, Observer observer) {
 		while(true) {
 //			System.out.println("Unify...");
 			Result res = equalModAny(p_prototype, instance);
@@ -318,9 +346,10 @@ public class Unificator {
 			if(disagree.prototype instanceof AuOperator
 					&& ((AuOperator)disagree.prototype).getDescriptor() instanceof ImUnknown) {
 //				System.out.println("Replace " + disagree.prototype + " <- " + disagree.instance);
-				p_prototype = p_prototype.replace(disagree.prototype,
-						disagree.instance);
-				p_unknowns.put(ImUnknown.extract(disagree.prototype), disagree.instance);
+				p_prototype = TermHelpers.replace(p_prototype,
+						disagree.prototype, disagree.instance);
+				if(observer != null)
+					observer.onReplace(disagree.prototype, disagree.instance);
 //				System.out.println("  prototype: " + p_prototype);
 //				System.out.println("  instance: " + instance);
 			}else return false;

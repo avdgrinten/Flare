@@ -23,26 +23,9 @@ public class NamedPi extends NamedTerm {
 	public AuTerm getCodomain() {
 		return codomain;
 	}
-
-	@Override public AuTerm map(TermMap fun) {
-		return new NamedPi(this.getAnnotation(),
-				name, fun.map(bound), fun.map(codomain));
-	}
+	
 	@Override public AuTerm type() {
 		return mkMeta();
-	}
-	@Override public AuTerm replace(AuTerm subterm, AuTerm replacement) {
-		if(this.equals(subterm))
-			return replacement;
-		return new NamedPi(this.getAnnotation(),
-				name, bound.replace(subterm, replacement),
-				codomain.replace(subterm, replacement));
-	}
-	@Override public boolean wellformed() {
-		throw new UnsupportedOperationException();
-	}
-	@Override public AuTerm reduce() {
-		throw new UnsupportedOperationException();
 	}
 	@Override public boolean primitive() {
 		throw new UnsupportedOperationException();

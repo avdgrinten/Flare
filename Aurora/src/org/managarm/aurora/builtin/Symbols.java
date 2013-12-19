@@ -18,6 +18,10 @@ public class Symbols {
 		@Override public String toString() {
 			return "symbolInline";
 		}
+		
+		@Override protected boolean reductive(AuTerm[] args) {
+			return false;
+		}
 		@Override protected boolean primitive(AuTerm[] args) {
 			return false;
 		}

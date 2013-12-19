@@ -16,6 +16,10 @@ public abstract class NamedTerm extends AuTerm {
 	public static NamedVar mkNamedVar(Object name, AuTerm type) {
 		return new NamedVar(null, name, type);
 	}
+	public static NamedVar mkNamedVarExt(AuTerm annotation,
+			Object name, AuTerm type) {
+		return new NamedVar(annotation, name, type);
+	}
 	public static NamedLambda mkNamedLambda(Object name, AuTerm bound, AuTerm expr) {
 		return new NamedLambda(null, name, bound, expr);
 	}
@@ -40,7 +44,7 @@ public abstract class NamedTerm extends AuTerm {
 			
 			AuTerm function = resolve(apply.getFunction(), stack);
 			AuTerm argument = resolve(apply.getArgument(), stack);
-			return new AuApply(apply.getAnnotation(),
+			return mkApplyExt(apply.getAnnotation(),
 					function, argument);
 		}else if(term instanceof AuConstant) {
 			return term;
@@ -51,7 +55,7 @@ public abstract class NamedTerm extends AuTerm {
 			stack.add(null);
 			AuTerm expr = resolve(lambda.getExpr(), stack);
 			stack.remove(stack.size() - 1);
-			return new AuLambda(lambda.getAnnotation(), bound, expr);
+			return mkLambdaExt(lambda.getAnnotation(), bound, expr);
 		}else if(term instanceof AuMeta) {
 			return term;
 		}else if(term instanceof AuOperator) {
@@ -60,7 +64,7 @@ public abstract class NamedTerm extends AuTerm {
 			AuTerm[] arguments = new AuTerm[operator.numArguments()];
 			for(int i = 0; i < operator.numArguments(); i++)
 				arguments[i] = resolve(operator.getArgument(i), stack);
-			return new AuOperator(operator.getAnnotation(),
+			return mkOperatorExt(operator.getAnnotation(),
 					operator.getDescriptor(), arguments);
 		}else if(term instanceof AuPi) {
 			AuPi pi = (AuPi)term;
@@ -69,12 +73,12 @@ public abstract class NamedTerm extends AuTerm {
 			stack.add(null);
 			AuTerm codomain = resolve(pi.getCodomain(), stack);
 			stack.remove(stack.size() - 1);
-			return new AuPi(pi.getAnnotation(), bound, codomain);
+			return mkPiExt(pi.getAnnotation(), bound, codomain);
 		}else if(term instanceof AuVar) {
 			AuVar var = (AuVar)term;
 			
 			AuTerm type = resolve(var.getType(), stack);
-			return new AuVar(var.getAnnotation(), var.getDepth(), type);
+			return mkVarExt(var.getAnnotation(), var.getDepth(), type);
 		}else if(term instanceof NamedLambda) {
 			NamedLambda lambda = (NamedLambda)term;
 			
@@ -82,7 +86,7 @@ public abstract class NamedTerm extends AuTerm {
 			stack.add(lambda.getName());
 			AuTerm expr = resolve(lambda.getExpr(), stack);
 			stack.remove(stack.size() - 1);
-			return new AuLambda(lambda.getAnnotation(), bound, expr);
+			return mkLambdaExt(lambda.getAnnotation(), bound, expr);
 		}else if(term instanceof NamedPi) {
 			NamedPi pi = (NamedPi)term;
 			
@@ -90,7 +94,7 @@ public abstract class NamedTerm extends AuTerm {
 			stack.add(pi.getName());
 			AuTerm expr = resolve(pi.getCodomain(), stack);
 			stack.remove(stack.size() - 1);
-			return new AuPi(pi.getAnnotation(), bound, expr);
+			return mkPiExt(pi.getAnnotation(), bound, expr);
 		}else if(term instanceof NamedVar) {
 			NamedVar var = (NamedVar)term;
 			
@@ -100,7 +104,7 @@ public abstract class NamedTerm extends AuTerm {
 				return new NamedVar(var.getAnnotation(),
 						var.getName(), type);
 			int depth = stack.size() - 1 - index;
-			return new AuVar(var.getAnnotation(), depth, type);
+			return mkVarExt(var.getAnnotation(), depth, type);
 		}else throw new RuntimeException("Illegal term " + term);
 	}
 	

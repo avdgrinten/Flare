@@ -1,11 +1,17 @@
 package org.managarm.aurora.link;
 
+import static org.managarm.aurora.lang.AuTerm.mkApplyExt;
+import static org.managarm.aurora.lang.AuTerm.mkLambdaExt;
+import static org.managarm.aurora.lang.AuTerm.mkOperatorExt;
+import static org.managarm.aurora.lang.AuTerm.mkPiExt;
+import static org.managarm.aurora.lang.AuTerm.mkVarExt;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.managarm.aurora.builtin.Symbols;
 import org.managarm.aurora.builtin.Strings;
+import org.managarm.aurora.builtin.Symbols;
 import org.managarm.aurora.lang.AuApply;
 import org.managarm.aurora.lang.AuConstant;
 import org.managarm.aurora.lang.AuLambda;
@@ -64,7 +70,7 @@ public class Linker implements Loader {
 				continue;
 			if(!symb_name.equals(name))
 				continue;
-			if(!AuTerm.congruent(symb_type, type))
+			if(!symb_type.equals(type))
 				continue;
 			return symbol;
 		}
@@ -97,7 +103,7 @@ public class Linker implements Loader {
 			
 			AuTerm function = resolve(apply.getFunction());
 			AuTerm argument = resolve(apply.getArgument());
-			return new AuApply(apply.getAnnotation(),
+			return mkApplyExt(apply.getAnnotation(),
 					function, argument);
 		}else if(term instanceof AuConstant) {
 			return term;
@@ -106,7 +112,7 @@ public class Linker implements Loader {
 			
 			AuTerm bound = resolve(lambda.getBound());
 			AuTerm expr = resolve(lambda.getExpr());
-			return new AuLambda(lambda.getAnnotation(), bound, expr);
+			return mkLambdaExt(lambda.getAnnotation(), bound, expr);
 		}else if(term instanceof AuMeta) {
 			return term;
 		}else if(term instanceof AuOperator) {
@@ -115,19 +121,19 @@ public class Linker implements Loader {
 			AuTerm[] arguments = new AuTerm[operator.numArguments()];
 			for(int i = 0; i < operator.numArguments(); i++)
 				arguments[i] = resolve(operator.getArgument(i));
-			return new AuOperator(operator.getAnnotation(),
+			return mkOperatorExt(operator.getAnnotation(),
 					operator.getDescriptor(), arguments);
 		}else if(term instanceof AuPi) {
 			AuPi pi = (AuPi)term;
 			
 			AuTerm bound = resolve(pi.getBound());
 			AuTerm codomain = resolve(pi.getCodomain());
-			return new AuPi(pi.getAnnotation(), bound, codomain);
+			return mkPiExt(pi.getAnnotation(), bound, codomain);
 		}else if(term instanceof AuVar) {
 			AuVar var = (AuVar)term;
 			
 			AuTerm type = resolve(var.getType());
-			return new AuVar(var.getAnnotation(), var.getDepth(), type);
+			return mkVarExt(var.getAnnotation(), var.getDepth(), type);
 		}else throw new RuntimeException("Illegal term " + term);
 	}
 }

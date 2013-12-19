@@ -1,6 +1,5 @@
 package org.managarm.aurora.lang;
 
-import org.managarm.aurora.util.TermMap;
 
 public final class AuConstant extends AuTerm {
 	public static class Descriptor {
@@ -16,7 +15,7 @@ public final class AuConstant extends AuTerm {
 	
 	private Descriptor descriptor;
 	
-	public AuConstant(AuTerm annotation, Descriptor descriptor) {
+	AuConstant(AuTerm annotation, Descriptor descriptor) {
 		super(annotation);
 		this.descriptor = descriptor;
 	}
@@ -42,26 +41,11 @@ public final class AuConstant extends AuTerm {
 	@Override public boolean primitive() {
 		return true;
 	}
-
-	@Override public AuTerm reduce() {
-		return this;
-	}
-	@Override public boolean wellformed() {
-		return descriptor.signature.wellformed();
-	}
+	
 	@Override public AuTerm apply(int depth, AuTerm term) {
 		return this;
 	}
 	@Override public AuTerm embed(int embed_depth, int limit) {
-		return this;
-	}
-	@Override public AuTerm map(TermMap fun) {
-		return new AuConstant(this.getAnnotation(),
-				descriptor);
-	}
-	@Override public AuTerm replace(AuTerm subterm, AuTerm replacement) {
-		if(this.equals(subterm))
-			return replacement;
 		return this;
 	}
 	@Override public boolean verifyVariable(int depth, AuTerm type) {

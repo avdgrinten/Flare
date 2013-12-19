@@ -21,26 +21,19 @@ public class NamedVar extends NamedTerm {
 	@Override public String toString() {
 		return "$" + name + ":" + type;
 	}
+	@Override public int hashCode() {
+		return name.hashCode() + type.hashCode();
+	}
+	@Override public boolean equals(Object object) {
+		if(!(object instanceof NamedVar))
+			return false;
+		NamedVar other = (NamedVar)object;
+		return name.equals(other.name)
+				&& type.equals(other.type);
+	}
 	
-	@Override public AuTerm map(TermMap fun) {
-		return new NamedVar(this.getAnnotation(),
-				name, fun.map(type));
-	}
-	@Override public AuTerm replace(AuTerm subterm, AuTerm replacement) {
-		if(this.equals(subterm))
-			return replacement;
-		return new NamedVar(this.getAnnotation(),
-				name, type.replace(subterm, replacement));
-	}
-	@Override public boolean wellformed() {
-		return type.wellformed();
-	}
 	@Override public AuTerm type() {
 		return type;
-	}
-	@Override public AuTerm reduce() {
-		return new NamedVar(this.getAnnotation(), name,
-				type.reduce());
 	}
 	@Override public boolean primitive() {
 		return false;
@@ -53,7 +46,7 @@ public class NamedVar extends NamedTerm {
 		return new NamedVar(this.getAnnotation(), name,
 				type.apply(depth, term));
 	}
-	@Override public boolean verifyVariable(int depth, AuTerm type) {
-		return type.verifyVariable(depth, type);
+	@Override public boolean verifyVariable(int depth, AuTerm verify_type) {
+		return type.verifyVariable(depth, verify_type);
 	}
 }

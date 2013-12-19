@@ -18,7 +18,7 @@ public class Lists {
 		if(ltype.getDescriptor() != listType)
 			throw new IllegalArgumentException();
 		AuTerm basetype = ltype.getArgument(0);
-		AuTerm res = mkOperator(listLen, basetype, list).reduce();
+		AuTerm res = mkOperator(listLen, basetype, list);
 		return IntArithmetic.IntLit.extract(res).getValue().intValue();
 	}
 	public static AuTerm utilAppend(AuTerm list, AuTerm value) {
@@ -31,7 +31,7 @@ public class Lists {
 		AuTerm basetype = ltype.getArgument(0);
 		return mkOperator(listElem, basetype, list,
 				mkConst(new IntArithmetic.IntLit(index)),
-				mkConst(Proof.tautology)).reduce();
+				mkConst(Proof.tautology));
 	}
 	
 	public static AuOperator.Descriptor listType = new AuOperator.GroundDescriptor(
@@ -81,6 +81,9 @@ public class Lists {
 			return p_length == other.p_length;
 		}
 		
+		@Override protected boolean reductive(AuTerm[] args) {
+			return false;
+		}
 		@Override protected boolean primitive(AuTerm[] args) {
 			return true;
 		}
@@ -99,7 +102,7 @@ public class Lists {
 			return "listLen";
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive())
+			if(!args[1].primitive())
 				return mkOperator(this, args);
 			List list = List.extract(args[1]);
 			return mkConst(new IntArithmetic.IntLit(list.getLength()));

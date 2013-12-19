@@ -35,7 +35,19 @@ public class IntArithmetic {
 		public BigInteger getValue() {
 			return value;
 		}
-		@Override public String toString() { return value.toString(); }
+		
+		@Override public String toString() {
+			return value.toString();
+		}
+		@Override public int hashCode() {
+			return value.hashCode();
+		}
+		@Override public boolean equals(Object object) {
+			if(!(object instanceof IntLit))
+				return false;
+			IntLit other = (IntLit)object;
+			return value.equals(other.value);
+		}
 	};
 
 	public static AuOperator.Descriptor intAdd = new AuOperator.EvalDescriptor(
@@ -200,7 +212,7 @@ public class IntArithmetic {
 			BigInteger n = IntLit.extract(args[0]).getValue();
 			for(int i = 0; i < n.intValue(); i++)
 				value = mkApply(mkApply(args[3], value),
-						mkConst(new IntLit(i))).reduce();
+						mkConst(new IntLit(i)));
 			return value;
 		}
 	};

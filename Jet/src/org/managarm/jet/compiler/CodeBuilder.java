@@ -163,7 +163,7 @@ public class CodeBuilder {
 			AuTerm applied = mkApply(mkApply(function,
 					mkOperator(value_ref, mkConst(IntArithmetic.intType))),
 					mkOperator(counter_ref, mkConst(IntArithmetic.intType)));
-			computeTerm(applied.reduce());
+			computeTerm(applied);
 			value.store(p_method);
 			
 			// increment the counter value

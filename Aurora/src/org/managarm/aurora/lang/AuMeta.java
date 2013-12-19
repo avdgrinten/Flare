@@ -1,9 +1,8 @@
 package org.managarm.aurora.lang;
 
-import org.managarm.aurora.util.TermMap;
 
 public final class AuMeta extends AuTerm {
-	public AuMeta(AuTerm annotation) {
+	AuMeta(AuTerm annotation) {
 		super(annotation);
 	}
 	
@@ -23,25 +22,11 @@ public final class AuMeta extends AuTerm {
 	@Override public boolean primitive() {
 		return true;
 	}
-
-	@Override public AuTerm reduce() {
-		return this;
-	}
-	@Override public boolean wellformed() {
-		return true;
-	}
+	
 	@Override public AuTerm apply(int depth, AuTerm term) {
 		return this;
 	}
 	@Override public AuTerm embed(int embed_depth, int limit) {
-		return this;
-	}
-	@Override public AuTerm map(TermMap fun) {
-		return this;
-	}
-	@Override public AuTerm replace(AuTerm subterm, AuTerm replacement) {
-		if(this.equals(subterm))
-			return replacement;
 		return this;
 	}
 	@Override public boolean verifyVariable(int depth, AuTerm type) {

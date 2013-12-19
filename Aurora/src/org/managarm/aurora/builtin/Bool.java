@@ -1,10 +1,10 @@
 package org.managarm.aurora.builtin;
 
 import static org.managarm.aurora.lang.AuTerm.mkConst;
-import static org.managarm.aurora.lang.AuTerm.mkVar;
-import static org.managarm.aurora.lang.AuTerm.mkPi;
 import static org.managarm.aurora.lang.AuTerm.mkMeta;
 import static org.managarm.aurora.lang.AuTerm.mkOperator;
+import static org.managarm.aurora.lang.AuTerm.mkPi;
+import static org.managarm.aurora.lang.AuTerm.mkVar;
 
 import org.managarm.aurora.lang.AuConstant;
 import org.managarm.aurora.lang.AuOperator;
@@ -29,7 +29,19 @@ public class Bool {
 		public boolean getValue() {
 			return value;
 		}
-		@Override public String toString() { return Boolean.toString(value); }
+		
+		@Override public String toString() {
+			return Boolean.toString(value);
+		}
+		@Override public int hashCode() {
+			return value ? 0 : 1;
+		}
+		@Override public boolean equals(Object object) {
+			if(!(object instanceof BoolLit))
+				return false;
+			BoolLit other = (BoolLit)object;
+			return value == other.value;
+		}
 	};
 
 	public static AuOperator.Descriptor boolOr = new AuOperator.EvalDescriptor(

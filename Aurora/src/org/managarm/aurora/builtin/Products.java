@@ -19,7 +19,7 @@ public class Products {
 			throw new IllegalArgumentException();
 		AuTerm ltype = ptype.getArgument(0);
 		AuTerm rtype = ptype.getArgument(1);
-		return mkOperator(projectL, ltype, rtype, product).reduce();
+		return mkOperator(projectL, ltype, rtype, product);
 	}
 	public static AuTerm utilProjectR(AuTerm product) {
 		AuOperator ptype = (AuOperator)product.type();
@@ -27,7 +27,7 @@ public class Products {
 			throw new IllegalArgumentException();
 		AuTerm ltype = ptype.getArgument(0);
 		AuTerm rtype = ptype.getArgument(1);
-		return mkOperator(projectR, ltype, rtype, product).reduce();
+		return mkOperator(projectR, ltype, rtype, product);
 	}
 	
 	public static AuOperator.Descriptor productType = new AuOperator.GroundDescriptor(
@@ -50,6 +50,10 @@ public class Products {
 			    mkOperator(productType, mkVar(3, mkMeta()), mkVar(2, mkMeta())))))), 4) {
 		@Override public String toString() {
 			return "product";
+		}
+		
+		@Override protected boolean reductive(AuTerm[] args) {
+			return false;
 		}
 		@Override protected boolean primitive(AuTerm[] args) {
 			return true;

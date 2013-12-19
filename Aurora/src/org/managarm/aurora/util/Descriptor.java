@@ -47,7 +47,7 @@ public class Descriptor {
 			AuTerm key_term = mkConst(new Strings.StringLit(p_ident));
 			AuTerm entry = Products.utilProduct(key_term, term);
 			AuTerm item = Anys.utilBox(entry);
-			return Lists.utilAppend(descriptor, item).reduce();
+			return Lists.utilAppend(descriptor, item);
 		}
 	}
 	

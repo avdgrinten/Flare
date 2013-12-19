@@ -14,7 +14,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.managarm.aurora.builtin.IntArithmetic;
-import org.managarm.aurora.builtin.Mutation;
 import org.managarm.aurora.builtin.Strings;
 import org.managarm.aurora.builtin.Symbols;
 import org.managarm.aurora.lang.AuConstant;
@@ -24,7 +23,7 @@ import org.managarm.aurora.lang.AuTerm;
 import org.managarm.aurora.util.Descriptor;
 import org.managarm.aurora.util.Descriptor.RecordPath;
 import org.managarm.aurora.util.NamedTerm;
-import org.managarm.aurora.util.TermMap;
+import org.managarm.aurora.util.TermHelpers;
 import org.managarm.aurora.util.Unificator;
 import org.managarm.korona.syntax.StAccess;
 import org.managarm.korona.syntax.StApply;
@@ -165,7 +164,7 @@ public class Resolver {
 					&& root.getType() != null) {
 				defn = buildExpr(root.getDefn());
 				type = buildExpr(root.getType());
-				if(!AuTerm.congruent(defn.type(), type))
+				if(!defn.type().equals(type))
 					throw new RuntimeException("Declared type of"
 						+ root.getName() + " does not match implicit type");
 			}else if(root.getDefn() != null) {
@@ -206,7 +205,7 @@ public class Resolver {
 			annotation.setFlag(expr.getImplicit(), new RecordPath("fImplicit"));
 			
 			AuTerm annotate_term = annotation.asTerm();
-			if(AuTerm.congruent(annotate_term, Descriptor.emptyRecord))
+			if(annotate_term.equals(Descriptor.emptyRecord))
 				annotate_term = null;
 			
 			pushScope(new Scope.BindScope(expr.getArgument().ident(),
@@ -264,37 +263,29 @@ public class Resolver {
 		}else throw new RuntimeException("Illegal syntax node " + in);
 	}
 	
-	public void overload2(AuTerm function, AuTerm argument,
-			List<AuTerm> res) {
+	public AuTerm unifyApply(final AuTerm function, AuTerm argument) {
 		AuPi ftype = (AuPi)function.type();
+		AuTerm argtype = argument.type();
 		
-		Unificator.ImUnknown unknown = new Unificator.ImUnknown();
-		AuTerm signature = mkApply(function,
-				mkOperator(unknown, ftype.getBound())).reduce();
-		
-		Unificator unificator = new Unificator(signature);
-		AuTerm instance = mkApply(function, argument).map(new TermMap() {
-			@Override public AuTerm map(AuTerm in) {
-				if(Unificator.ImUnknown.instance(in)) {
-					return mkOperator(Unificator.any,
-							mkOperator(Unificator.any, mkMeta()));
-				}else return in.map(this);
-			}
-		}).reduce();
-		//System.out.println("Unify");
-		if(unificator.unify(instance)) {
-			res.add(unificator.getPrototype());
-		}else{
-			//System.out.println("Could not unify");
-			//System.out.println(signature);
-			//System.out.println(instance);
-		}
+		// unify the function argument type and the supplied argument type.
+		Unificator.ReplaceObserver unified_func
+				= new Unificator.ReplaceObserver(function);		
+		Unificator type_unificator = new Unificator(ftype.getBound());
+		if(!type_unificator.unify(Unificator.unknownToIndef(argtype),
+				unified_func))
+			return null;
+
+		return mkApply(unified_func.getTerm(), argument);
 	}
 	
 	public void overload(AuTerm function, List<AuTerm> arguments,
 			List<AuTerm> res) {
 		if(arguments.size() == 0) {
-			res.add(function);
+			if(!TermHelpers.anyTerm(function, new TermHelpers.Predicate() {
+					@Override public boolean test(AuTerm in) {
+						return Unificator.ImUnknown.instance(in);
+					}}))
+				res.add(function);
 			return;
 		}
 		
@@ -312,10 +303,9 @@ public class Resolver {
 			return;
 		}
 		
-		List<AuTerm> partial_res = new ArrayList<AuTerm>();
-		overload2(function, arguments.get(0), partial_res);
-		for(AuTerm partial : partial_res)
-			overload(partial, arguments.subList(1, arguments.size()), res);
+		AuTerm natural_res = unifyApply(function, arguments.get(0));
+		if(natural_res != null)
+			overload(natural_res, arguments.subList(1,  arguments.size()), res);
 	}
 	
 	public AuTerm buildApply(StNode function, List<AuTerm> arguments) {
