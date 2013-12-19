@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.managarm.aurora.builtin.IntArithmetic;
+import org.managarm.aurora.builtin.Locals;
 import org.managarm.aurora.builtin.Mutation;
 import org.managarm.aurora.builtin.Strings;
 import org.managarm.aurora.builtin.Symbols;
@@ -298,7 +299,28 @@ public class Resolver {
 				mkNamedLambda(variable, input_type, embedded));
 	}
 	
-	public void overload(Overload overload, List<AuTerm> arguments,
+	public void overloadLift(Overload overload,
+			AuTerm function, AuTerm argument,
+			List<AuTerm> rem_arguments, List<AuTerm> res) {
+		AuTerm arg_type = argument.type();
+		AuTerm input_type = mutateExtractType(arg_type);
+		NamedTerm.Name variable = new NamedTerm.Name();
+		
+		AuTerm lift_res = unifyApply(function,
+				mkOperator(variable, input_type));
+		if(lift_res == null)
+			return;
+		
+		List<Lift> lifts = new ArrayList<Lift>();
+		for(int i = 0; i < overload.numLifts(); i++)
+			lifts.add(overload.getLift(i));
+		lifts.add(new Lift(argument, input_type, variable));
+
+		Overload applied = new Overload(lift_res, lifts);
+		overloadRecursive(applied, rem_arguments, res);
+	}
+	
+	public void overloadRecursive(Overload overload, List<AuTerm> arguments,
 			List<AuTerm> res) {
 		AuTerm term = overload.getTerm();
 		
@@ -338,26 +360,21 @@ public class Resolver {
 			
 			Overload applied = new Overload(mkApply(term,
 					mkOperator(unknown, ftype.getBound())), lifts);
-			overload(applied, arguments, res);
+			overloadRecursive(applied, arguments, res);
 			return;
 		}
 		
 		if(argtype.isOperator(Mutation.mutatorType)
 				&& !ftype.getBound().isOperator(Mutation.mutatorType)) {
-			AuTerm input_type = mutateExtractType(argtype);
-			NamedTerm.Name variable = new NamedTerm.Name();
-			
-			AuTerm lift_res = unifyApply(term,
-					mkOperator(variable, input_type));
-			if(lift_res != null) {
-				List<Lift> lifts = new ArrayList<Lift>();
-				for(int i = 0; i < overload.numLifts(); i++)
-					lifts.add(overload.getLift(i));
-				lifts.add(new Lift(argument, input_type, variable));
-
-				Overload applied = new Overload(lift_res, lifts);
-				overload(applied, arguments.subList(1,  arguments.size()), res);
-			}
+			overloadLift(overload, term, argument,
+					arguments.subList(1, arguments.size()), res);
+		}else if(argtype.isOperator(Locals.localType)
+				&& !ftype.getBound().isOperator(Locals.localType)) {
+			AuOperator local_type = (AuOperator)argtype;
+			AuTerm read = mkOperator(Locals.localRead,
+					local_type.getArgument(0), argument);
+			overloadLift(overload, term, read,
+					arguments.subList(1, arguments.size()), res);
 		}else{
 			AuTerm natural_res = unifyApply(term, argument);
 			if(natural_res != null) {
@@ -366,7 +383,7 @@ public class Resolver {
 					lifts.add(overload.getLift(i));
 				
 				Overload applied = new Overload(natural_res, lifts);
-				overload(applied, arguments.subList(1,  arguments.size()), res);
+				overloadRecursive(applied, arguments.subList(1,  arguments.size()), res);
 			}
 		}
 	}
@@ -388,7 +405,7 @@ public class Resolver {
 			
 			List<AuTerm> overloads = new ArrayList<AuTerm>();
 			for(AuTerm symbol : resolved)
-				overload(new Overload(symbol, Collections.<Lift>emptyList()),
+				overloadRecursive(new Overload(symbol, Collections.<Lift>emptyList()),
 						arguments, overloads);
 			
 			if(overloads.size() == 0)
