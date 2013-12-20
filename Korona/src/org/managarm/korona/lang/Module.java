@@ -11,6 +11,8 @@ import java.util.Map;
 
 import org.managarm.aurora.lang.AuConstant;
 import org.managarm.aurora.lang.AuTerm;
+import org.managarm.aurora.util.Descriptor;
+import org.managarm.aurora.util.Descriptor.RecordPath;
 
 public class Module extends AuConstant.Descriptor {
 	public static AuConstant.Descriptor moduleType = new AuConstant.Descriptor(
@@ -53,5 +55,19 @@ public class Module extends AuConstant.Descriptor {
 	}
 	public Iterator<AuTerm> symbolIterator() {
 		return p_symbols.iterator();
+	}
+	public boolean hasSymbol(String name, AuTerm type) {
+		for(AuTerm symbol : p_symbols) {
+			Descriptor desc = new Descriptor(symbol);
+			String symb_name = desc.getString(new RecordPath("name"));
+			AuTerm symb_type = desc.get(new RecordPath("type"));
+			
+			if(!symb_name.equals(name))
+				continue;
+			if(!symb_type.equals(type))
+				continue;
+			return true;
+		}
+		return false;
 	}
 }

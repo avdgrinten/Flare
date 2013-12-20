@@ -21,6 +21,7 @@ import org.managarm.aurora.lang.AuTerm;
 import org.managarm.aurora.link.Interpreter;
 import org.managarm.aurora.link.Linker;
 import org.managarm.aurora.util.Descriptor;
+import org.managarm.korona.lang.ResolveMsg;
 import org.managarm.korona.lang.Resolver;
 import org.managarm.korona.syntax.Parser;
 import org.managarm.korona.syntax.StFile;
@@ -90,6 +91,23 @@ public class TestKorona {
 		resolver.buildFile(syntax);
 		long resolve_time = System.currentTimeMillis() - resolve_start;
 		System.out.println("Resolve time: " + resolve_time + "ms");
+		
+		if(!resolver.okay()) {
+			System.err.println("Resolve failure: "
+					+ resolver.numMessages() + " errors/warnings!");
+			for(int i = 0; i < resolver.numMessages(); i++) {
+				ResolveMsg msg = resolver.getMessage(i);
+				System.err.println(msg.getLevel() + ": " + msg);
+			}
+			return;
+		}
+		
+		System.out.println("Resolve success. "
+				+ resolver.numMessages() + " warnings!");
+		for(int i = 0; i < resolver.numMessages(); i++) {
+			ResolveMsg msg = resolver.getMessage(i);
+			System.err.println(msg.getLevel() + ": " + msg);
+		}
 		
 		Linker linker = new Linker();
 		Iterator<AuTerm> it = resolver.symbolIterator();

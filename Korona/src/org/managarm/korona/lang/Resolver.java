@@ -4,6 +4,8 @@ import static org.managarm.aurora.lang.AuTerm.mkApply;
 import static org.managarm.aurora.lang.AuTerm.mkConst;
 import static org.managarm.aurora.lang.AuTerm.mkMeta;
 import static org.managarm.aurora.lang.AuTerm.mkOperator;
+import static org.managarm.aurora.lang.AuTerm.mkVar;
+import static org.managarm.aurora.lang.AuTerm.mkPi;
 import static org.managarm.aurora.util.NamedTerm.mkNamedLambdaExt;
 import static org.managarm.aurora.util.NamedTerm.mkNamedLambda;
 import static org.managarm.aurora.util.NamedTerm.mkNamedPi;
@@ -39,6 +41,31 @@ import org.managarm.korona.syntax.StPi;
 import org.managarm.korona.syntax.StRoot;
 
 public class Resolver {
+	private static AuConstant.Descriptor errorType
+		= new AuConstant.Descriptor(mkMeta()) {
+		@Override public String toString() {
+			return "error";
+		}
+	};
+	private static AuOperator.Descriptor exprError
+		= new AuOperator.Descriptor(
+			mkPi(mkMeta(),
+			 mkVar(0, mkMeta())), 1) {
+		@Override public String toString() {
+			return "exprError";
+		}
+		
+		@Override protected boolean reducible(AuTerm[] args) {
+			return false;
+		}
+		@Override protected AuTerm reduce(AuTerm[] args) {
+			throw new AssertionError("reduce() called");
+		}
+		@Override protected boolean primitive(AuTerm[] args) {
+			return false;
+		}
+	};
+	
 	// stores all symbols that are generated as part of this source file
 	private List<AuTerm> p_symbols = new ArrayList<AuTerm>();
 	
@@ -46,22 +73,40 @@ public class Resolver {
 	private Module p_thisModule;	
 	private List<Module> p_imports = new ArrayList<Module>();
 	
-	private List<Scope> scopeStack = new ArrayList<Scope>();
+	// stores the active scopes. used to resolve local identifiers
+	private List<Scope> p_scopeStack = new ArrayList<Scope>();
+	
+	// stores error messages and warnings
+	private List<ResolveMsg> p_messages = new ArrayList<ResolveMsg>();
 	
 	public Resolver() {
 		
 	}
 	
+	public boolean okay() {
+		boolean okay_flag = true;
+		for(ResolveMsg msg : p_messages)
+			if(msg.getLevel() == ResolveMsg.Level.kError)
+				okay_flag = false;
+		return okay_flag;
+	}
+	public int numMessages() {
+		return p_messages.size();
+	}
+	public ResolveMsg getMessage(int i) {
+		return p_messages.get(i);
+	}
+	
 	private void pushScope(Scope scope) {
-		scopeStack.add(scope);
+		p_scopeStack.add(scope);
 	}
 	private void popScope() {
-		scopeStack.remove(scopeStack.size() - 1);
+		p_scopeStack.remove(p_scopeStack.size() - 1);
 	}
 	
 	private void resolveBind(String identifier, List<AuTerm> res) {
-		for(int i = scopeStack.size() - 1; i >= 0; i--) {
-			Scope item = scopeStack.get(i);
+		for(int i = p_scopeStack.size() - 1; i >= 0; i--) {
+			Scope item = p_scopeStack.get(i);
 			if(!(item instanceof Scope.BindScope))
 				continue;
 			Scope.BindScope scope = (Scope.BindScope)item;
@@ -179,6 +224,12 @@ public class Resolver {
 			
 			if(defn != null)
 				System.out.println(root.getName() + " := " + defn);
+
+			if(p_thisModule.hasSymbol(root.getName(), type)) {
+				p_messages.add(new ResolveMsg.DuplicateSymbol(
+						p_thisModule.getPath(), root.getName(), type));
+				return;
+			}
 			
 			Descriptor desc = new Descriptor(Descriptor.emptyRecord);
 			desc.setString(p_thisModule.getPath(), new RecordPath("module"));
@@ -240,10 +291,13 @@ public class Resolver {
 			StIdent expr = (StIdent)in;
 			
 			List<AuTerm> res = resolveIdentifier(expr.string());
-			if(res.size() == 0)
-				throw new RuntimeException("Could not resolve " + in);
-			if(res.size() > 1)
-				throw new RuntimeException(in + " is ambiguous");
+			if(res.size() == 0) {
+				p_messages.add(new ResolveMsg.UnresolvedIdentifier(expr));
+				return mkOperator(exprError, mkConst(errorType));
+			}
+			if(res.size() > 1) 
+				p_messages.add(new ResolveMsg.AmbiguousIdentifier(expr,
+						res.get(0)));
 			return res.get(0);
 		}else if(in instanceof StAccess) {
 			StAccess expr = (StAccess)in;
@@ -399,19 +453,29 @@ public class Resolver {
 		}else if(function instanceof StIdent) {
 			StIdent ident = (StIdent)function;
 			
+			// break early if there are already errors
+			for(AuTerm argument : arguments)
+				if(argument.isOperator(exprError))
+					return mkOperator(exprError, mkConst(errorType));
+			
 			List<AuTerm> resolved = resolveIdentifier(ident.string());
-			if(resolved.size() == 0)
-				throw new RuntimeException("Could not resolve " + ident);
+			if(resolved.size() == 0) {
+				p_messages.add(new ResolveMsg.UnresolvedIdentifier(ident));
+				return mkOperator(exprError, mkConst(errorType));
+			}
 			
 			List<AuTerm> overloads = new ArrayList<AuTerm>();
 			for(AuTerm symbol : resolved)
 				overloadRecursive(new Overload(symbol, Collections.<Lift>emptyList()),
 						arguments, overloads);
 			
-			if(overloads.size() == 0)
-				throw new RuntimeException("No valid overload for " + ident);
+			if(overloads.size() == 0) {
+				p_messages.add(new ResolveMsg.NoOverload(ident));
+				return mkOperator(exprError, mkConst(errorType));
+			}
 			if(overloads.size() > 1)
-				throw new RuntimeException("Overload for " + ident + " is ambiguous");
+				p_messages.add(new ResolveMsg.AmbiguousOverload(ident,
+						overloads.get(0)));
 			return overloads.get(0);
 		}else{
 			AuTerm res = buildExpr(function);
