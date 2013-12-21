@@ -1,19 +1,14 @@
 package org.managarm.korona.syntax;
 
-import static org.managarm.util.peg.PegParser.choice;
-import static org.managarm.util.peg.PegParser.not;
-import static org.managarm.util.peg.PegParser.optional;
-import static org.managarm.util.peg.PegParser.repeat;
-import static org.managarm.util.peg.PegParser.sequence;
 import static org.managarm.util.peg.PegParser.transform;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import org.managarm.util.peg.PegError;
 import org.managarm.util.peg.PegGrammar;
 import org.managarm.util.peg.PegItem;
 import org.managarm.util.peg.PegParser;
-import org.managarm.util.peg.PegResult;
 import org.managarm.util.peg.PegTransform;
 
 public class Parser {
@@ -50,15 +45,18 @@ public class Parser {
 	private static PegGrammar<Tag> g = new PegGrammar<Tag>();
 	
 	{
-		g.setRule(Tag.space, repeat(choice(g.ref(Tag.whitespace),
-				g.ref(Tag.lineComment), g.ref(Tag.blockComment))));
+		g.setRule(Tag.space, new PegItem.Repeat(
+				new PegItem.TrivialChoice(
+					g.ref(Tag.whitespace),
+					g.ref(Tag.lineComment),
+					g.ref(Tag.blockComment))));
 		g.setRule(Tag.whitespace, new PegItem() {
-			public PegResult parse(PegParser p) {
+			public Object parse(PegParser p) {
 				if(p.eof())
-					return PegResult.failure();
+					return new PegError.EofError(p.curSourceRef());
 				char c = p.read();
 				if(!(c == ' ' || c == '\t' || c == '\n'))
-					return PegResult.failure();
+					return new PegError.ExpectError(p.curSourceRef(), "whitespace");
 				
 				do {
 					if(!(c == ' ' || c == '\t' || c == '\n'))
@@ -68,27 +66,35 @@ public class Parser {
 						break;
 					c = p.read();
 				}while(c == ' ' || c == '\t' || c == '\n');
-				return PegResult.success();
+				return null;
 			}
 		});
-		g.setRule(Tag.lineComment, sequence(PegParser.string("//"),
-				repeat(not(PegParser.singleChar('\n'),
-						PegParser.any(1))), PegParser.any(1)));
-		g.setRule(Tag.blockComment, sequence(PegParser.string("/*"),
-				repeat(not(PegParser.string("*/"),
-						PegParser.any(1))), PegParser.any(2)));
+		g.setRule(Tag.lineComment, new PegItem.Sequence(
+				new PegItem.CharString("//"),
+				new PegItem.Repeat(
+					new PegItem.Not(new PegItem.SingleChar('\n'),
+						new PegItem.Any(1))
+				),
+				new PegItem.Any(1)));
+		g.setRule(Tag.blockComment, new PegItem.Sequence(
+				new PegItem.CharString("/*"),
+				new PegItem.Repeat(
+					new PegItem.Not(new PegItem.CharString("*/"),
+						new PegItem.Any(1))
+				),
+				new PegItem.Any(2)));
 		
 		g.setRule(Tag.number, new PegItem() {
-			public PegResult parse(PegParser p) {
+			public Object parse(PegParser p) {
 				p.parse(g.ref(Tag.space));
 
 				if(p.eof())
-					return PegResult.failure();
+					return new PegError.EofError(p.curSourceRef());
 				char c = p.read();
 				if(!(c >= '0' && c <= '9'))
-					return PegResult.failure();
+					return new PegError.ExpectError(p.curSourceRef(), "number");
 
-				StringBuffer s = new StringBuffer();
+				StringBuilder s = new StringBuilder();
 				do {
 					s.append(c);
 					p.consume();
@@ -96,24 +102,25 @@ public class Parser {
 						break;
 					c = p.read();
 				} while(c >= '0' && c <= '9');
-				return PegResult.success(new BigInteger(s.toString()));
+				return new BigInteger(s.toString());
 			}
 		});
-		g.setRule(Tag.ident, choice(g.ref(Tag.charIdent),
+		g.setRule(Tag.ident, new PegItem.TrivialChoice(
+				g.ref(Tag.charIdent),
 				g.ref(Tag.operatorIdent)));
 		g.setRule(Tag.charIdent, new PegItem() {
-			public PegResult parse(PegParser p) {
+			public Object parse(PegParser p) {
 				p.parse(g.ref(Tag.space));
 				
 				if(p.eof())
-					return PegResult.failure();
+					return new PegError.EofError(p.curSourceRef());
 				char c = p.read();
 				if(!(c >= 'a' && c <= 'z')
 						&& !(c >= 'A' && c <= 'Z')
 						&& c != '_')
-					return PegResult.failure();
+					return new PegError.ExpectError(p.curSourceRef(), "identifier");
 
-				StringBuffer s = new StringBuffer();
+				StringBuilder s = new StringBuilder();
 				do {
 					s.append(c);
 					p.consume();
@@ -124,157 +131,169 @@ public class Parser {
 						|| (c >= 'A' && c <= 'Z')
 						|| (c >= '0' && c <= '9')
 						|| c == '_');
-				return PegResult.success(s.toString());
+				return s.toString();
 			}
 		});
 		g.setRule(Tag.operatorIdent, new PegItem() {
-			public PegResult parse(PegParser p) {
+			public Object parse(PegParser p) {
 				p.parse(g.ref(Tag.space));
 				
 				if(p.eof())
-					return PegResult.failure();
+					return new PegError.EofError(p.curSourceRef());
 				char c = p.read();
 				if(c != '(')
-					return PegResult.failure();
+					return new PegError.ExpectError(p.curSourceRef(), "operator identifier");
 
-				StringBuffer s = new StringBuffer();
+				StringBuilder s = new StringBuilder();
 				do {
 					s.append(c);
 					p.consume();
 					if(p.eof())
-						return PegResult.failure();;
+						return new PegError.EofError(p.curSourceRef());
 					c = p.read();
 					if(c == ' ')
-						return PegResult.failure();
+						return new PegError.ExpectError(p.curSourceRef(), "space");
 				} while(c != ')');
 				p.consume();
 				s.append(')');
-				return PegResult.success(s.toString());
+				return s.toString();
 			}
 		});
 
 		g.setRule(Tag.string, new PegItem() {
-			public PegResult parse(PegParser p) {
+			public Object parse(PegParser p) {
 				p.parse(g.ref(Tag.space));
 				
 				if(p.eof())
-					return PegResult.failure();
+					return new PegError.EofError(p.curSourceRef());
 				char c = p.read();
 				if(c != '"')
-					return PegResult.failure();
+					return new PegError.ExpectError(p.curSourceRef(), "string");
 				
-				StringBuffer s = new StringBuffer();
+				StringBuilder s = new StringBuilder();
 				while(true) {
 					p.consume();
 					if(p.eof())
-						return PegResult.failure();
+						return new PegError.EofError(p.curSourceRef());
 					c = p.read();
 					if(c == '"')
 						break;
 					s.append(c);					
 				};
 				p.consume();
-				return PegResult.success(s.toString());
+				return s.toString();
 			}
 		});
 
-		g.setRule(Tag.specSemicolon, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar(';')), PegParser.forgetLeft));
-		g.setRule(Tag.specPlus, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('+')), PegParser.forgetLeft));
-		g.setRule(Tag.specMinus, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('-')), PegParser.forgetLeft));
-		g.setRule(Tag.specTimes, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('*')), PegParser.forgetLeft));
-		g.setRule(Tag.specSlash, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('/')), PegParser.forgetLeft));
-		g.setRule(Tag.specPercent, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('%')), PegParser.forgetLeft));
-		g.setRule(Tag.specEqual, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('=')), PegParser.forgetLeft));
-		g.setRule(Tag.specColonEqual, transform(sequence(g.ref(Tag.space),
-				PegParser.string(":=")), PegParser.forgetLeft));
-		g.setRule(Tag.specDoubleEqual, transform(sequence(g.ref(Tag.space),
-				PegParser.string("==")), PegParser.forgetLeft));
-		g.setRule(Tag.specInEqual, transform(sequence(g.ref(Tag.space),
-				PegParser.string("!=")), PegParser.forgetLeft));
-		g.setRule(Tag.specParL, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('(')), PegParser.forgetLeft));
-		g.setRule(Tag.specParR, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar(')')), PegParser.forgetLeft));
-		g.setRule(Tag.specCurlyL, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('{')), PegParser.forgetLeft));
-		g.setRule(Tag.specCurlyR, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('}')), PegParser.forgetLeft));
-		g.setRule(Tag.specDot, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('.')), PegParser.forgetLeft));
-		g.setRule(Tag.specColon, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar(':')), PegParser.forgetLeft));
-		g.setRule(Tag.specDoubleColon, transform(sequence(g.ref(Tag.space),
-				PegParser.string("::")), PegParser.forgetLeft));
-		g.setRule(Tag.specQm, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('?')), PegParser.forgetLeft));
-		g.setRule(Tag.specLt, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('<')), PegParser.forgetLeft));
-		g.setRule(Tag.specGt, transform(sequence(g.ref(Tag.space),
-				PegParser.singleChar('>')), PegParser.forgetLeft));
-		g.setRule(Tag.specLe, transform(sequence(g.ref(Tag.space),
-				PegParser.string("<=")), PegParser.forgetLeft));
-		g.setRule(Tag.specGe, transform(sequence(g.ref(Tag.space),
-				PegParser.string(">=")), PegParser.forgetLeft));
-		g.setRule(Tag.specDoubleLt, transform(sequence(g.ref(Tag.space),
-				PegParser.string("<<")), PegParser.forgetLeft));
-		g.setRule(Tag.specDoubleGt, transform(sequence(g.ref(Tag.space),
-				PegParser.string(">>")), PegParser.forgetLeft));
-		g.setRule(Tag.specDoubleBar, transform(sequence(g.ref(Tag.space),
-				PegParser.string("||")), PegParser.forgetLeft));
-		g.setRule(Tag.specDoubleAnd, transform(sequence(g.ref(Tag.space),
-				PegParser.string("||")), PegParser.forgetLeft));
-		g.setRule(Tag.specArrow, transform(sequence(g.ref(Tag.space),
-				PegParser.string("->")), PegParser.forgetLeft));
-		g.setRule(Tag.specDoubleArrow, transform(sequence(g.ref(Tag.space),
-				PegParser.string("=>")), PegParser.forgetLeft));
+		g.setRule(Tag.specSemicolon, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar(';')), PegParser.forgetLeft));
+		g.setRule(Tag.specPlus, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('+')), PegParser.forgetLeft));
+		g.setRule(Tag.specMinus, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('-')), PegParser.forgetLeft));
+		g.setRule(Tag.specTimes, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('*')), PegParser.forgetLeft));
+		g.setRule(Tag.specSlash, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('/')), PegParser.forgetLeft));
+		g.setRule(Tag.specPercent, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('%')), PegParser.forgetLeft));
+		g.setRule(Tag.specEqual, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('=')), PegParser.forgetLeft));
+		g.setRule(Tag.specColonEqual, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString(":=")), PegParser.forgetLeft));
+		g.setRule(Tag.specDoubleEqual, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("==")), PegParser.forgetLeft));
+		g.setRule(Tag.specInEqual, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("!=")), PegParser.forgetLeft));
+		g.setRule(Tag.specParL, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('(')), PegParser.forgetLeft));
+		g.setRule(Tag.specParR, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar(')')), PegParser.forgetLeft));
+		g.setRule(Tag.specCurlyL, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('{')), PegParser.forgetLeft));
+		g.setRule(Tag.specCurlyR, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('}')), PegParser.forgetLeft));
+		g.setRule(Tag.specDot, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('.')), PegParser.forgetLeft));
+		g.setRule(Tag.specColon, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar(':')), PegParser.forgetLeft));
+		g.setRule(Tag.specDoubleColon, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("::")), PegParser.forgetLeft));
+		g.setRule(Tag.specQm, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('?')), PegParser.forgetLeft));
+		g.setRule(Tag.specLt, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('<')), PegParser.forgetLeft));
+		g.setRule(Tag.specGt, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.SingleChar('>')), PegParser.forgetLeft));
+		g.setRule(Tag.specLe, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("<=")), PegParser.forgetLeft));
+		g.setRule(Tag.specGe, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString(">=")), PegParser.forgetLeft));
+		g.setRule(Tag.specDoubleLt, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("<<")), PegParser.forgetLeft));
+		g.setRule(Tag.specDoubleGt, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString(">>")), PegParser.forgetLeft));
+		g.setRule(Tag.specDoubleBar, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("||")), PegParser.forgetLeft));
+		g.setRule(Tag.specDoubleAnd, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("||")), PegParser.forgetLeft));
+		g.setRule(Tag.specArrow, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("->")), PegParser.forgetLeft));
+		g.setRule(Tag.specDoubleArrow, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("=>")), PegParser.forgetLeft));
 
-		g.setRule(Tag.kwImport, transform(sequence(g.ref(Tag.space),
-				PegParser.string("import")), PegParser.forgetLeft));
-		g.setRule(Tag.kwModule, transform(sequence(g.ref(Tag.space),
-				PegParser.string("module")), PegParser.forgetLeft));
-		g.setRule(Tag.kwExport, transform(sequence(g.ref(Tag.space),
-				PegParser.string("export")), PegParser.forgetLeft));
-		g.setRule(Tag.kwExtern, transform(sequence(g.ref(Tag.space),
-				PegParser.string("extern")), PegParser.forgetLeft));
+		g.setRule(Tag.kwImport, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("import")), PegParser.forgetLeft));
+		g.setRule(Tag.kwModule, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("module")), PegParser.forgetLeft));
+		g.setRule(Tag.kwExport, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("export")), PegParser.forgetLeft));
+		g.setRule(Tag.kwExtern, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("extern")), PegParser.forgetLeft));
 
-		g.setRule(Tag.kwMeta, transform(sequence(g.ref(Tag.space),
-				PegParser.string("Meta")), PegParser.forgetLeft));
-		g.setRule(Tag.kwVar, transform(sequence(g.ref(Tag.space),
-				PegParser.string("var")), PegParser.forgetLeft));
-		g.setRule(Tag.kwIf, transform(sequence(g.ref(Tag.space),
-				PegParser.string("if")), PegParser.forgetLeft));
-		g.setRule(Tag.kwThen, transform(sequence(g.ref(Tag.space),
-				PegParser.string("then")), PegParser.forgetLeft));
-		g.setRule(Tag.kwElse, transform(sequence(g.ref(Tag.space),
-				PegParser.string("else")), PegParser.forgetLeft));
-		g.setRule(Tag.kwWhile, transform(sequence(g.ref(Tag.space),
-				PegParser.string("while")), PegParser.forgetLeft));
-		g.setRule(Tag.kwReturn, transform(sequence(g.ref(Tag.space),
-				PegParser.string("return")), PegParser.forgetLeft));
+		g.setRule(Tag.kwMeta, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("Meta")), PegParser.forgetLeft));
+		g.setRule(Tag.kwVar, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("var")), PegParser.forgetLeft));
+		g.setRule(Tag.kwIf, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("if")), PegParser.forgetLeft));
+		g.setRule(Tag.kwThen, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("then")), PegParser.forgetLeft));
+		g.setRule(Tag.kwElse, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("else")), PegParser.forgetLeft));
+		g.setRule(Tag.kwWhile, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("while")), PegParser.forgetLeft));
+		g.setRule(Tag.kwReturn, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("return")), PegParser.forgetLeft));
 
-		g.setRule(Tag.kwEmbed, transform(sequence(g.ref(Tag.space),
-				PegParser.string("@embed")), PegParser.forgetLeft));
-		g.setRule(Tag.kwImplicit, transform(sequence(g.ref(Tag.space),
-				PegParser.string("@implicit")), PegParser.forgetLeft));
+		g.setRule(Tag.kwEmbed, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("@embed")), PegParser.forgetLeft));
+		g.setRule(Tag.kwImplicit, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("@implicit")), PegParser.forgetLeft));
 
-		g.setRule(Tag.argumentDecl, transform(sequence(g.ref(Tag.ident),
-				g.ref(Tag.specColon), g.ref(Tag.expr)),
+		g.setRule(Tag.argumentDecl, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.ident),
+					g.ref(Tag.specColon),
+					g.ref(Tag.expr)),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					String ident = (String)in[0];
 					StNode type = (StNode)in[2];
 					return new StArgumentDecl(ident, type);
 				}}));
-		g.setRule(Tag.localDecl, transform(sequence(g.ref(Tag.kwVar), g.ref(Tag.ident),
-				optional(sequence(g.ref(Tag.specColon), g.ref(Tag.expr))),
-				optional(sequence(g.ref(Tag.specEqual), g.ref(Tag.expr))),
+		g.setRule(Tag.localDecl, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.kwVar),
+					g.ref(Tag.ident),
+					new PegItem.Optional(
+						new PegItem.Sequence(
+							g.ref(Tag.specColon),
+							g.ref(Tag.expr))),
+					new PegItem.Optional(
+						new PegItem.Sequence(
+							g.ref(Tag.specEqual),
+							g.ref(Tag.expr))),
 				g.ref(Tag.specSemicolon)),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
@@ -322,8 +341,14 @@ public class Parser {
 				}}));*/
 		
 		g.setRule(Tag.expr, g.ref(Tag.assignExpr));
-		g.setRule(Tag.assignExpr, transform(sequence(g.ref(Tag.applyExpr),
-				repeat(sequence(choice(g.ref(Tag.specEqual)), g.ref(Tag.applyExpr)))),
+		g.setRule(Tag.assignExpr, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.applyExpr),
+					new PegItem.Repeat(
+						new PegItem.Sequence(
+							new PegItem.TrivialChoice(
+								g.ref(Tag.specEqual)),
+							g.ref(Tag.applyExpr)))),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					StNode left = (StNode)in[0];
@@ -339,8 +364,11 @@ public class Parser {
 					}
 					return res;
 				}}));
-		g.setRule(Tag.applyExpr, transform(sequence(g.ref(Tag.connectiveExpr),
-				repeat(g.ref(Tag.connectiveExpr))),
+		g.setRule(Tag.applyExpr, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.connectiveExpr),
+					new PegItem.Repeat(
+						g.ref(Tag.connectiveExpr))),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					StNode left = (StNode)in[0];
@@ -353,10 +381,15 @@ public class Parser {
 					}
 					return res;
 				}}));
-		g.setRule(Tag.connectiveExpr, transform(sequence(g.ref(Tag.compareExpr),
-				repeat(sequence(choice(g.ref(Tag.specDoubleBar),
-						g.ref(Tag.specDoubleAnd)
-					), g.ref(Tag.compareExpr)))),
+		g.setRule(Tag.connectiveExpr, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.compareExpr),
+					new PegItem.Repeat(
+						new PegItem.Sequence(
+							new PegItem.TrivialChoice(
+								g.ref(Tag.specDoubleBar),
+								g.ref(Tag.specDoubleAnd)),
+							g.ref(Tag.compareExpr)))),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					StNode left = (StNode)in[0];
@@ -374,11 +407,19 @@ public class Parser {
 					}
 					return res;
 				}}));
-		g.setRule(Tag.compareExpr, transform(sequence(g.ref(Tag.shiftExpr),
-				repeat(sequence(choice(g.ref(Tag.specDoubleEqual), g.ref(Tag.specInEqual), 
-						g.ref(Tag.specLe), g.ref(Tag.specGe),
-						g.ref(Tag.specLt), g.ref(Tag.specGt)
-					), g.ref(Tag.shiftExpr)))),
+		g.setRule(Tag.compareExpr, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.shiftExpr),
+					new PegItem.Repeat(
+						new PegItem.Sequence(
+							new PegItem.TrivialChoice(
+								g.ref(Tag.specDoubleEqual),
+								g.ref(Tag.specInEqual), 
+								g.ref(Tag.specLe),
+								g.ref(Tag.specGe),
+								g.ref(Tag.specLt),
+								g.ref(Tag.specGt)),
+							g.ref(Tag.shiftExpr)))),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					StNode left = (StNode)in[0];
@@ -404,9 +445,16 @@ public class Parser {
 					}
 					return res;
 				}}));
-		g.setRule(Tag.shiftExpr, transform(sequence(g.ref(Tag.addExpr),
-				repeat(sequence(choice(g.ref(Tag.specDoubleLt),
-					g.ref(Tag.specDoubleGt)), g.ref(Tag.addExpr)))),
+		g.setRule(Tag.shiftExpr, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.addExpr),
+					new PegItem.Repeat(
+						new PegItem.Sequence(
+							new PegItem.TrivialChoice(
+								g.ref(Tag.specDoubleLt),
+								g.ref(Tag.specDoubleGt)
+							),
+							g.ref(Tag.addExpr)))),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					StNode left = (StNode)in[0];
@@ -424,9 +472,16 @@ public class Parser {
 					}
 					return res;
 				}}));
-		g.setRule(Tag.addExpr, transform(sequence(g.ref(Tag.multExpr),
-				repeat(sequence(choice(g.ref(Tag.specPlus),
-						g.ref(Tag.specMinus)), g.ref(Tag.multExpr)))),
+		g.setRule(Tag.addExpr, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.multExpr),
+					new PegItem.Repeat(
+						new PegItem.Sequence(
+							new PegItem.TrivialChoice(
+								g.ref(Tag.specPlus),
+								g.ref(Tag.specMinus)
+							),
+							g.ref(Tag.multExpr)))),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					StNode left = (StNode)in[0];
@@ -444,10 +499,17 @@ public class Parser {
 					}
 					return res;
 				}}));
-		g.setRule(Tag.multExpr, transform(sequence(g.ref(Tag.accessExpr),
-				repeat(sequence(choice(g.ref(Tag.specTimes),
-						g.ref(Tag.specSlash), g.ref(Tag.specPercent)),
-					g.ref(Tag.accessExpr)))),
+		g.setRule(Tag.multExpr, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.accessExpr),
+					new PegItem.Repeat(
+						new PegItem.Sequence(
+							new PegItem.TrivialChoice(
+								g.ref(Tag.specTimes),
+								g.ref(Tag.specSlash),
+								g.ref(Tag.specPercent)
+							),
+							g.ref(Tag.accessExpr)))),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					StNode left = (StNode)in[0];
@@ -467,8 +529,13 @@ public class Parser {
 					}
 					return res;
 				}}));
-		g.setRule(Tag.accessExpr, transform(sequence(g.ref(Tag.tailExpr),
-				repeat(sequence(g.ref(Tag.specDot), g.ref(Tag.ident)))),
+		g.setRule(Tag.accessExpr, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.tailExpr),
+					new PegItem.Repeat(
+						new PegItem.Sequence(
+							g.ref(Tag.specDot),
+							g.ref(Tag.ident)))),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					StNode left = (StNode)in[0];
@@ -481,19 +548,23 @@ public class Parser {
 					}
 					return res;
 				}}));
-		g.setRule(Tag.tailExpr, choice(g.ref(Tag.parenExpr),
-				g.ref(Tag.ifExpr), g.ref(Tag.blockExpr), g.ref(Tag.functionExpr),
+		g.setRule(Tag.tailExpr, new PegItem.Choice(
+				g.ref(Tag.parenExpr),
+				g.ref(Tag.ifExpr),
+				g.ref(Tag.blockExpr),
+				g.ref(Tag.functionExpr),
 				g.ref(Tag.metaExpr),
-				g.ref(Tag.litNumberExpr), g.ref(Tag.litStringExpr),
+				g.ref(Tag.litNumberExpr),
+				g.ref(Tag.litStringExpr),
 				g.ref(Tag.identExpr)));
 		
-		g.setRule(Tag.parenExpr, transform(sequence(g.ref(Tag.specParL),
+		g.setRule(Tag.parenExpr, transform(new PegItem.Sequence(g.ref(Tag.specParL),
 				g.ref(Tag.expr), g.ref(Tag.specParR)),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					return (StNode)in[1];
 				}}));
-		g.setRule(Tag.ifExpr, transform(sequence(g.ref(Tag.kwIf),
+		g.setRule(Tag.ifExpr, transform(new PegItem.Sequence(g.ref(Tag.kwIf),
 				g.ref(Tag.expr), g.ref(Tag.kwThen), g.ref(Tag.expr),
 				g.ref(Tag.kwElse), g.ref(Tag.expr)),
 			new PegTransform<Object[]>() {
@@ -503,8 +574,8 @@ public class Parser {
 					StNode else_case = (StNode)in[5];
 					return applyOperator("(ite)", expr, then_case, else_case);
 				}}));
-		g.setRule(Tag.blockExpr, transform(sequence(g.ref(Tag.specCurlyL),
-				repeat(transform(sequence(g.ref(Tag.expr), g.ref(Tag.specSemicolon)),
+		g.setRule(Tag.blockExpr, transform(new PegItem.Sequence(g.ref(Tag.specCurlyL),
+				new PegItem.Repeat(transform(new PegItem.Sequence(g.ref(Tag.expr), g.ref(Tag.specSemicolon)),
 						PegParser.forgetRight)),
 				g.ref(Tag.specCurlyR)),
 			new PegTransform<Object[]>() {
@@ -519,11 +590,15 @@ public class Parser {
 					return res;
 				}}));
 		
-		g.setRule(Tag.functionExpr, transform(sequence(
-				optional(g.ref(Tag.kwImplicit)),
-				g.ref(Tag.argumentDecl),
-				choice(g.ref(Tag.specArrow), g.ref(Tag.specDoubleArrow)),
-				g.ref(Tag.expr)),
+		g.setRule(Tag.functionExpr, transform(
+				new PegItem.Sequence(
+					new PegItem.Optional(g.ref(Tag.kwImplicit)),
+					g.ref(Tag.argumentDecl),
+					new PegItem.TrivialChoice(
+						g.ref(Tag.specArrow),
+						g.ref(Tag.specDoubleArrow)
+					),
+					g.ref(Tag.expr)),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					boolean implicit = in[0] != null;
@@ -552,36 +627,52 @@ public class Parser {
 				@Override public Object transform(String in) {
 					return new StLiteral.LitString(in);
 				}}));
-		g.setRule(Tag.identExpr, transform(not(choice(
-					g.ref(Tag.kwIf),
-					g.ref(Tag.kwThen),
-					g.ref(Tag.kwElse),
-					g.ref(Tag.kwReturn)
-				), g.ref(Tag.ident)),
-				new PegTransform<String>() {
-					@Override public Object transform(String in) {
-						return new StIdent(in);
-					}}));
+		g.setRule(Tag.identExpr, transform(
+				new PegItem.Not(
+					new PegItem.TrivialChoice(
+						g.ref(Tag.kwIf),
+						g.ref(Tag.kwThen),
+						g.ref(Tag.kwElse),
+						g.ref(Tag.kwReturn)),
+					g.ref(Tag.ident)),
+			new PegTransform<String>() {
+				@Override public Object transform(String in) {
+					return new StIdent(in);
+				}}));
 		
-		g.setRule(Tag.file, transform(repeat(g.ref(Tag.root)),
-				new PegTransform<Object[]>() {
-			@Override public Object transform(Object[] in) {
-				StNode[] elements = Arrays.copyOf(in, in.length, StNode[].class);
-				return new StFile(elements);
-			}}));
-		g.setRule(Tag.root, choice(g.ref(Tag.importRoot),
+		g.setRule(Tag.file, transform(
+				new PegItem.Until(g.ref(Tag.root),
+					new PegItem.Sequence(
+						g.ref(Tag.space),
+						new PegItem.Eof())),
+			new PegTransform<Object[]>() {
+				@Override public Object transform(Object[] in) {
+					StNode[] elements = Arrays.copyOf(in, in.length, StNode[].class);
+					return new StFile(elements);
+				}}));
+		g.setRule(Tag.root, new PegItem.Choice(
+				g.ref(Tag.importRoot),
 				g.ref(Tag.moduleRoot),
-				g.ref(Tag.exportRoot), g.ref(Tag.externRoot)));
-		g.setRule(Tag.importRoot, transform(sequence(g.ref(Tag.kwImport),
-					g.ref(Tag.ident), g.ref(Tag.specSemicolon)),
+				g.ref(Tag.exportRoot),
+				g.ref(Tag.externRoot)));
+		g.setRule(Tag.importRoot, transform(
+				new PegItem.Sequence(
+					new PegItem.Trivial(g.ref(Tag.kwImport)),
+					g.ref(Tag.ident),
+					g.ref(Tag.specSemicolon)),
 				new PegTransform<Object[]>() {
 			@Override public Object transform(Object[] in) {
 				String module = (String)in[1];
 				return new StRoot.Import(module);
 			}}));
-		g.setRule(Tag.moduleRoot, transform(sequence(g.ref(Tag.kwModule),
-				g.ref(Tag.ident), g.ref(Tag.specCurlyL),
-				repeat(g.ref(Tag.root)), g.ref(Tag.specCurlyR)),
+		g.setRule(Tag.moduleRoot, transform(
+				new PegItem.Sequence(
+					new PegItem.Trivial(g.ref(Tag.kwModule)),
+					g.ref(Tag.ident),
+					g.ref(Tag.specCurlyL),
+					new PegItem.Until(
+						g.ref(Tag.root),
+						g.ref(Tag.specCurlyR))),
 				new PegTransform<Object[]>() {
 			@Override public Object transform(Object[] in) {
 				String module = (String)in[1];
@@ -589,9 +680,14 @@ public class Parser {
 				return new StRoot.Module(module, Arrays.copyOf(members,
 						members.length, StNode[].class));
 			}}));
-		g.setRule(Tag.exportRoot, transform(sequence(optional(g.ref(Tag.kwEmbed)),
-				g.ref(Tag.kwExport), g.ref(Tag.ident),
-				g.ref(Tag.specColonEqual), g.ref(Tag.expr), g.ref(Tag.specSemicolon)),
+		g.setRule(Tag.exportRoot, transform(
+				new PegItem.Sequence(
+					new PegItem.Optional(g.ref(Tag.kwEmbed)),
+					new PegItem.Trivial(g.ref(Tag.kwExport)),
+					g.ref(Tag.ident),
+					g.ref(Tag.specColonEqual),
+					g.ref(Tag.expr),
+					g.ref(Tag.specSemicolon)),
 				new PegTransform<Object[]>() {
 			@Override public Object transform(Object[] in) {
 				int flags = StRoot.Symbol.kFlagExport;
@@ -601,8 +697,13 @@ public class Parser {
 				StNode value = (StNode)in[4];
 				return new StRoot.Symbol(ident, null, value, flags);
 			}}));
-		g.setRule(Tag.externRoot, transform(sequence(g.ref(Tag.kwExtern), g.ref(Tag.ident),
-				g.ref(Tag.specDoubleColon), g.ref(Tag.expr), g.ref(Tag.specSemicolon)),
+		g.setRule(Tag.externRoot, transform(
+				new PegItem.Sequence(
+					new PegItem.Trivial(g.ref(Tag.kwExtern)),
+					g.ref(Tag.ident),
+					g.ref(Tag.specDoubleColon),
+					g.ref(Tag.expr),
+					g.ref(Tag.specSemicolon)),
 				new PegTransform<Object[]>() {
 			@Override public Object transform(Object[] in) {
 				String ident = (String)in[1];
@@ -612,14 +713,27 @@ public class Parser {
 			}}));
 	}
 	
-	public StFile parse(String input) {
-		PegParser parser = new PegParser(input);
-		PegResult res = parser.parse(g.getRule(Tag.file));
-		if(!res.okay())
-			return null;
-		parser.parse(g.getRule(Tag.space));
-		if(!parser.eof())
-			return null;
-		return res.<StFile>object();
+	private PegParser p_parser;
+	private StFile p_result;
+	private PegError p_error;
+	
+	public void parse(String input) {
+		p_parser = new PegParser(input);
+		Object res = p_parser.parse(g.getRule(Tag.file));
+		if(res instanceof PegError) {
+			p_error = (PegError)res;
+		}else{
+			p_result = (StFile)res;
+		}
+	}
+	
+	public boolean okay() {
+		return p_error == null;
+	}
+	public String getError() {
+		return p_error.format(p_parser);
+	}
+	public StFile getResult() {
+		return p_result;
 	}
 }

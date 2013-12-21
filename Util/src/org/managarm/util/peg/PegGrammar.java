@@ -16,7 +16,11 @@ public class PegGrammar<R> {
 	public PegItem ref(final R name) {
 		final PegGrammar<R> self = this; 
 		return new PegItem() {
-			@Override public PegResult parse(PegParser p) {
+			@Override public String toString() {
+				return name.toString();
+			}
+			
+			@Override public Object parse(PegParser p) {
 				return p.parse(self.getRule(name));
 			}
 		};

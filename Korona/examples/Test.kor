@@ -27,8 +27,8 @@ module Korona {
 	export (||) := p:Bool => q:Bool => Builtin.boolOr p q;
 	export (&&) := p:Bool => q:Bool => Builtin.boolAnd p q;
 	
-	export (ite) := @implicit T:Meta => c:Bool => t:T => e:T =>
-		Builtin.ite T c t e;
+//	export (ite) := @implicit T:Meta => c:Bool => t:T => e:T =>
+//		Builtin.ite T c t e;
 	
 	export embed := @implicit T:Meta => x:T =>
 		Builtin.embed T x;
@@ -77,6 +77,6 @@ module Korona {
 import Korona;
 
 module Test {
-	export main := print x + 1;
+	export main := print 1
 }
 

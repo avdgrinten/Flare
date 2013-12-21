@@ -42,11 +42,16 @@ public class TestKorona {
 		
 		Parser parser = new Parser();
 		long parse_start = System.currentTimeMillis();
-		StFile syntax = parser.parse(source.toString());
+		parser.parse(source.toString());
 		long parse_time = System.currentTimeMillis() - parse_start;
 		System.out.println("Parse time: " + parse_time + "ms");
-		if(syntax == null)
-			throw new RuntimeException("Could not parse source");
+		
+		if(!parser.okay()) {
+			System.err.println("Could not parse source");
+			System.err.println(parser.getError());
+			return;
+		}
+		StFile syntax = parser.getResult();
 		
 		Resolver resolver = new Resolver();
 		resolver.addBuiltin(Nil.nilType);
