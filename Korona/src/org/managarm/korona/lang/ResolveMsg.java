@@ -19,6 +19,34 @@ public abstract class ResolveMsg {
 		}
 	}
 	
+	public static class NoSuchImport extends ResolveMsg {
+		private String p_module;
+		
+		public NoSuchImport(String module) {
+			super(Level.kWarning);
+			p_module = module;
+		}
+		
+		@Override public String toString() {
+			return "Imported module " + p_module + " does not exist"; 
+		}
+	}
+	
+	public static class IllegalAccess extends ResolveMsg {
+		private AuTerm p_lhs;
+		private String p_identifier;
+		
+		public IllegalAccess(AuTerm lhs, String identifier) {
+			super(Level.kError);
+			p_lhs = lhs;
+			p_identifier = identifier;
+		}
+		
+		@Override public String toString() {
+			return "Could not access member " + p_identifier + " of " + p_lhs;
+		}
+	}
+	
 	public static class DuplicateSymbol extends ResolveMsg {
 		private String p_module;
 		private String p_name;

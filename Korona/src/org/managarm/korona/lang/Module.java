@@ -46,6 +46,9 @@ public class Module extends AuConstant.Descriptor {
 		p_subModules.put(name, submodule);
 		return submodule;
 	}
+	public boolean hasSubModule(String name) {
+		return p_subModules.containsKey(name);
+	}
 	public Iterator<Module> subModuleIterator() {
 		return p_subModules.values().iterator();
 	}

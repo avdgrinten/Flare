@@ -175,6 +175,14 @@ public class Resolver {
 		desc.setFlag(true, new RecordPath("fEmbedSymbol"));
 		module.addSymbol(desc.asTerm());
 	}
+	public void addSymbol(AuTerm symbol) {
+		Descriptor desc = new Descriptor(symbol);
+		
+		String symb_module = desc.getString(new RecordPath("module"));
+		
+		Module module = p_rootModule.addSubModule(symb_module);
+		module.addSymbol(symbol);
+	}
 	
 	public Iterator<AuTerm> symbolIterator() {
 		return p_symbols.iterator();
@@ -187,6 +195,10 @@ public class Resolver {
 	public void buildRoot(StNode in) {
 		if(in instanceof StRoot.Import) {
 			StRoot.Import root = (StRoot.Import)in;
+			
+			if(!p_rootModule.hasSubModule(root.getModule()))
+				p_messages.add(new ResolveMsg.NoSuchImport(root.getModule()));
+			
 			p_imports.add(p_rootModule.addSubModule(root.getModule()));
 		}else if(in instanceof StRoot.Module) {
 			StRoot.Module root = (StRoot.Module)in;
@@ -216,9 +228,13 @@ public class Resolver {
 						+ root.getName() + " does not match implicit type");
 			}else if(root.getDefn() != null) {
 				defn = buildExpr(root.getDefn());
+				if(defn.isOperator(exprError))
+					return;
 				type = defn.type();
 			}else if(root.getType() != null) {
 				type = buildExpr(root.getType());
+				if(type.isOperator(exprError))
+					return;
 			}else throw new AssertionError("No type or definition for "
 					+ root.getName());
 			
@@ -303,19 +319,28 @@ public class Resolver {
 			StAccess expr = (StAccess)in;
 			
 			AuTerm left = buildExpr(expr.getLeft());
+			
+			// break early if there are already errors
+			if(left.isOperator(exprError))
+				return mkOperator(exprError, mkConst(errorType));
+			
 			if(left.type().isConstant(Module.moduleType)) {
 				Module module = (Module)((AuConstant)left).getDescriptor();
 				
 				List<AuTerm> res = new ArrayList<AuTerm>();
 				resolveExtern(expr.getIdentifier(), module, res);
-				if(res.size() == 0)
-					throw new RuntimeException("There is no "
-							+ expr.getIdentifier() + " in " + module.getName()); 
-				if(res.size() > 1)
-					throw new RuntimeException(expr.getIdentifier()
-							+ " is ambiguous");
+				if(res.size() == 0) {
+					p_messages.add(new ResolveMsg.IllegalAccess(left, expr.getIdentifier()));
+					return mkOperator(exprError, mkConst(errorType));
+				}
+				if(res.size() > 1) //FIXME: remove StIdent construction
+					p_messages.add(new ResolveMsg.AmbiguousIdentifier(
+							new StIdent(expr.getIdentifier()), res.get(0)));
 				return res.get(0);
-			}else throw new AssertionError("Illegal lhs for access");
+			}else{
+				p_messages.add(new ResolveMsg.IllegalAccess(left, expr.getIdentifier()));
+				return mkOperator(exprError, mkConst(errorType));
+			}
 		}else throw new RuntimeException("Illegal syntax node " + in);
 	}
 	

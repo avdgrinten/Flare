@@ -47,15 +47,21 @@ public class Interpreter {
 		}
 	}
 	
-	public AuTerm execute(AuTerm term) {
+	public static abstract class World {
+		public void print(String string) {
+			throw new UnsupportedOperationException();
+		}
+	}
+	
+	public AuTerm execute(World world, AuTerm term) {
 		if(term.isOperator(Mutation.embed)) {
 			AuOperator operator = (AuOperator)term;
 			return operator.getArgument(1);
 		}else if(term.isOperator(Mutation.seq)) {
 			AuOperator operator = (AuOperator)term;
-			AuTerm pred = execute(operator.getArgument(2));
+			AuTerm pred = execute(world, operator.getArgument(2));
 			AuTerm res = mkApply(operator.getArgument(3), pred);
-			return execute(res);
+			return execute(world, res);
 		}else if(term.isOperator(Locals.localAlloc)) {
 			AuOperator operator = (AuOperator)term;
 			AuTerm type = operator.getArgument(0);
@@ -64,7 +70,7 @@ public class Interpreter {
 			Data data = new Data();
 			InternalRef ref = new InternalRef(data);
 			
-			return execute(mkApply(scope, mkOperator(ref,
+			return execute(world, mkApply(scope, mkOperator(ref,
 					mkOperator(Locals.localType, type))));
 		}else if(term.isOperator(Locals.localWrite)) {
 			AuOperator operator = (AuOperator)term;
@@ -77,7 +83,7 @@ public class Interpreter {
 			return ref.read();
 		}else if(term.isOperator(Io.print)) {
 			AuOperator operator = (AuOperator)term;
-			System.out.println(operator.getArgument(1));
+			world.print(operator.getArgument(1).toString());
 			return mkConst(Nil.nilValue);
 		}else throw new RuntimeException("Illegal term " + term);
 	}
