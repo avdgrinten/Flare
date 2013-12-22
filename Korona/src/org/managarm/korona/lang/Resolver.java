@@ -105,15 +105,20 @@ public class Resolver {
 		p_scopeStack.remove(p_scopeStack.size() - 1);
 	}
 	
-	private void resolveBind(String identifier, List<AuTerm> res) {
+	private void resolveScope(String identifier, List<AuTerm> res) {
 		for(int i = p_scopeStack.size() - 1; i >= 0; i--) {
 			Scope item = p_scopeStack.get(i);
-			if(!(item instanceof Scope.BindScope))
-				continue;
-			Scope.BindScope scope = (Scope.BindScope)item;
-			if(!scope.getName().equals(identifier))
-				continue;
-			res.add(mkOperator(scope.getDescriptor(), scope.getType()));
+			if(item instanceof Scope.LetScope) {
+				Scope.LetScope scope = (Scope.LetScope)item;
+				if(!scope.getName().equals(identifier))
+					continue;
+				res.add(scope.getDefn());
+			}else if(item instanceof Scope.BindScope) {
+				Scope.BindScope scope = (Scope.BindScope)item;
+				if(!scope.getName().equals(identifier))
+					continue;
+				res.add(mkOperator(scope.getDescriptor(), scope.getType()));
+			}else throw new AssertionError("Illegal scope: " + item);
 		}
 	}
 	private void resolveExtern(String identifier,
@@ -151,7 +156,7 @@ public class Resolver {
 	
 	private List<AuTerm> resolveIdentifier(String identifier) {
 		List<AuTerm> res = new ArrayList<AuTerm>();
-		resolveBind(identifier, res);
+		resolveScope(identifier, res);
 		resolveExtern(identifier, p_thisModule, res);
 		for(Module module : p_imports)
 			resolveExtern(identifier, module, res);
@@ -269,17 +274,14 @@ public class Resolver {
 		}else if(in instanceof StLetExpr) {
 			StLetExpr expr = (StLetExpr)in;
 			
-			NamedTerm.Name descriptor = new NamedTerm.Name();
 			AuTerm defn = buildExpr(expr.getDefn());
 			if(defn.isOperator(exprError))
 				return mkOperator(exprError, mkConst(errorType));
 			
-			pushScope(new Scope.BindScope(expr.getName(),
-					defn.type(), descriptor));
-			AuTerm res = mkNamedLambdaExt(null, descriptor,
-					defn.type(), buildExpr(expr.getExpr()));
+			pushScope(new Scope.LetScope(expr.getName(), defn));
+			AuTerm res = buildExpr(expr.getExpr());
 			popScope();
-			return mkApply(res, defn);
+			return res;
 		}else if(in instanceof StLambda) {
 			StLambda expr = (StLambda)in;
 			
@@ -530,6 +532,9 @@ public class Resolver {
 			
 			AuTerm res = buildExpr(function);
 			for(int i = 0; i < arguments.size(); i++) {
+				if(res.isOperator(exprError))
+					return mkOperator(exprError, mkConst(errorType));
+					
 				AuPi fun_type = (AuPi)res.type();
 				AuTerm bound_type = fun_type.getBound();
 				AuTerm arg_type = arguments.get(i).type();

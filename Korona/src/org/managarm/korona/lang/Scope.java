@@ -25,4 +25,20 @@ public class Scope {
 			return p_descriptor;
 		}
 	}
+	
+	public static class LetScope extends Scope {
+		private String p_name;
+		private AuTerm p_defn;
+		
+		public LetScope(String name, AuTerm defn) {
+			p_name = name;
+			p_defn = defn;
+		}
+		public String getName() {
+			return p_name;
+		}
+		public AuTerm getDefn() {
+			return p_defn;
+		}
+	}
 }

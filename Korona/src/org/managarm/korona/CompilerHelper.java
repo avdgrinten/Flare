@@ -97,6 +97,7 @@ public class CompilerHelper {
 		resolver.addBuiltin(Mutation.seq);
 		resolver.addBuiltin(Proof.proofType);
 		resolver.addBuiltin(Proof.tautology);
+		resolver.addBuiltin(Proof.assume);
 		resolver.addBuiltin(Locals.localType);
 		resolver.addBuiltin(Locals.localAlloc);
 		resolver.addBuiltin(Locals.localRead);

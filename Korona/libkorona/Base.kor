@@ -45,6 +45,10 @@ module Korona {
 	export intFold := count:Int => @implicit T:Meta => initial:T
 			=> f:(k:Int -> p:(Proof (k < count)) -> current:T -> T) =>
 		Builtin.intFold count T initial f;
+//	export intFold := count:Int => @implicit T:Meta => initial:T
+//			=> f:(k:Int -> current:T -> T) =>
+//				intFold count initial (k:Int => p:(Proof (k < count))
+//					=> current:T => f k current); 
 	
 	export intSum := count:Int => f:(k:Int -> Int) =>
 		intFold count 0 (k:Int => p:(Proof (k < count)) => current:Int =>
@@ -57,6 +61,8 @@ module Korona {
 	export listElem := @implicit T:Meta => list:(List T)
 		=> k:Int => p:(Proof (k < (listLen list))) =>
 			Builtin.listElem T list k p;
+	export unsafeListElem := @implicit T:Meta => list:(List T) => k:Int =>
+		listElem list k (Builtin.assume (k < (listLen list)));
 	
 	export (+) := @implicit T:Meta => list:(List T) => item:T =>
 		Builtin.listAppend T list item;
@@ -81,7 +87,9 @@ module Korona {
 	export (=) := @implicit L:Meta => local:(Local L) => value:L =>
 		Builtin.localWrite L local value;
 	
-	export Tuple := types:(List Meta) => intFold (listLen types) Nil
-		(k:Int => p:(Proof (k < (listLen types))) => prefix:Meta =>
-			Product prefix (listElem types k p));
+	export Tuple := types:(List Meta) =>
+		let n := listLen types ::
+		intFold n Nil
+			(k:Int => p:(Proof (k < n)) => suffix:Meta =>
+				Product (unsafeListElem types (n-k-1)) suffix);
 }
