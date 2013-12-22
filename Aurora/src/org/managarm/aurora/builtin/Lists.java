@@ -39,7 +39,7 @@ public class Lists {
 			 mkMeta()), 1) {
 		@Override public String toString() { return "List"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	
@@ -88,7 +88,7 @@ public class Lists {
 			return true;
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	public static AuOperator.Descriptor emptyList = new List(0);
@@ -102,8 +102,6 @@ public class Lists {
 			return "listLen";
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[1].primitive())
-				return mkOperator(this, args);
 			List list = List.extract(args[1]);
 			return mkConst(new IntArithmetic.IntLit(list.getLength()));
 		}
@@ -117,8 +115,6 @@ public class Lists {
 			return "listAppend";
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[1].primitive())
-				return mkOperator(this, args);
 			AuOperator list = (AuOperator)args[1];
 			int length = List.extract(list).getLength();
 			
@@ -145,8 +141,6 @@ public class Lists {
 			return "listElem";
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[1].primitive() || !args[2].primitive())
-				return mkOperator(this, args);
 			AuOperator list = (AuOperator)args[1];
 			IntArithmetic.IntLit index = IntArithmetic.IntLit.extract(args[2]);
 			return list.getArgument(index.getValue().intValue() + 1);

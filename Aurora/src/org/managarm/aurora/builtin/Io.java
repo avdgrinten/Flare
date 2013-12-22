@@ -18,7 +18,7 @@ public class Io {
 		}
 		@Override public String toString() { return "print"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	}
 	public static AuOperator.Descriptor print = new Print();

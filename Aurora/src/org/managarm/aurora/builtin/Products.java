@@ -38,7 +38,7 @@ public class Products {
 			return "Product";
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	
@@ -59,7 +59,7 @@ public class Products {
 			return true;
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	
@@ -72,8 +72,6 @@ public class Products {
 			return "projectL";
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[2].primitive())
-				return mkOperator(this, args);
 			AuOperator operator = (AuOperator)args[2];
 			return operator.getArgument(2);
 		}
@@ -88,20 +86,16 @@ public class Products {
 			return "projectR";
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[2].primitive())
-				return mkOperator(this, args);
 			AuOperator operator = (AuOperator)args[2];
 			return operator.getArgument(3);
 		}
 	};
 
-	public static AuOperator.GroundDescriptor isProductType = new AuOperator.GroundDescriptor(
+	public static AuOperator.Descriptor isProductType = new AuOperator.EvalDescriptor(
 			mkPi(mkMeta(),
 			 mkConst(Bool.boolType)), 1) {
 		@Override public String toString() { return "isProductType"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive())
-				return mkOperator(this, args);
 			if(!(args[0] instanceof AuOperator))
 				return mkConst(new Bool.BoolLit(false));
 			AuOperator operator = (AuOperator)args[0];

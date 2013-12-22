@@ -4,7 +4,6 @@ import static org.managarm.aurora.lang.AuTerm.mkConst;
 import static org.managarm.aurora.lang.AuTerm.mkMeta;
 import static org.managarm.aurora.lang.AuTerm.mkPi;
 import static org.managarm.aurora.lang.AuTerm.mkVar;
-import static org.managarm.aurora.lang.AuTerm.mkOperator;
 
 import org.managarm.aurora.lang.AuOperator;
 import org.managarm.aurora.lang.AuTerm;
@@ -26,7 +25,7 @@ public class Symbols {
 			return false;
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 }

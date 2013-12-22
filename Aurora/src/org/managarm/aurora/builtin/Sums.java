@@ -24,7 +24,7 @@ public class Sums {
 			  mkPi(mkVar(1, mkMeta()),
 			   mkOperator(sumType, mkVar(2, mkMeta()), mkVar(1, mkMeta()))))), 3) {
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	
@@ -34,7 +34,7 @@ public class Sums {
 			  mkPi(mkVar(0, mkMeta()),
 			   mkOperator(sumType, mkVar(2, mkMeta()), mkVar(1, mkMeta()))))), 3) {
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 }

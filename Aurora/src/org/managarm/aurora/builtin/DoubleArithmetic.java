@@ -6,10 +6,7 @@ import org.managarm.aurora.lang.AuOperator;
 
 import static org.managarm.aurora.lang.AuTerm.mkPi;
 import static org.managarm.aurora.lang.AuTerm.mkConst;
-import static org.managarm.aurora.lang.AuTerm.mkOperator;
 import static org.managarm.aurora.lang.AuTerm.mkMeta;
-import static org.managarm.aurora.lang.AuTerm.mkVar;
-import static org.managarm.aurora.lang.AuTerm.mkApply;
 
 public class DoubleArithmetic {
 	public static AuConstant.Descriptor doubleType = new AuConstant.Descriptor(mkMeta()) {
@@ -21,30 +18,27 @@ public class DoubleArithmetic {
 			return (DoubleLit)((AuConstant)term).getDescriptor();
 		}
 		
-		private Double value;
+		private double p_value;
 		
 		public DoubleLit(Double value) {
 			super(mkConst(doubleType));
-			this.value = value;
-		}
-		public DoubleLit(long value) {
-			this(Double.valueOf(value));
+			this.p_value = value;
 		}
 		public Double getValue() {
-			return value;
+			return p_value;
 		}
 		
 		@Override public String toString() {
-			return value.toString();
+			return Double.toString(p_value);
 		}
 		@Override public int hashCode() {
-			return value.hashCode();
+			return (int)p_value;
 		}
 		@Override public boolean equals(Object object) {
 			if(!(object instanceof DoubleLit))
 				return false;
 			DoubleLit other = (DoubleLit)object;
-			return value.equals(other.value);
+			return p_value == other.p_value;
 		}
 	};
 
@@ -54,8 +48,6 @@ public class DoubleArithmetic {
 			  mkConst(doubleType))), 2) {
 		@Override public String toString() { return "doubleAdd"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			Double x = DoubleLit.extract(args[0]).getValue();
 			Double y = DoubleLit.extract(args[1]).getValue();
 			return mkConst(new DoubleLit(x + y));
@@ -67,8 +59,6 @@ public class DoubleArithmetic {
 			  mkConst(doubleType))), 2) {
 		@Override public String toString() { return "doubleSub"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			Double x = DoubleLit.extract(args[0]).getValue();
 			Double y = DoubleLit.extract(args[1]).getValue();
 			return mkConst(new DoubleLit(x - y));
@@ -80,8 +70,6 @@ public class DoubleArithmetic {
 			  mkConst(doubleType))), 2) {
 		@Override public String toString() { return "doubleMul"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			Double x = DoubleLit.extract(args[0]).getValue();
 			Double y = DoubleLit.extract(args[1]).getValue();
 			return mkConst(new DoubleLit(x * y));
@@ -93,28 +81,11 @@ public class DoubleArithmetic {
 			  mkConst(doubleType))), 2) {
 		@Override public String toString() { return "doubleDiv"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			Double x = DoubleLit.extract(args[0]).getValue();
 			Double y = DoubleLit.extract(args[1]).getValue();
 			return mkConst(new DoubleLit(x / y));
 		}
 	};
-	/*
-	public static AuOperator.Descriptor doubleMod = new AuOperator.EvalDescriptor(
-			mkPi(mkConst(doubleType),
-			 mkPi(mkConst(doubleType),
-			  mkConst(doubleType))), 2) {
-		@Override public String toString() { return "doubleMod"; }
-		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
-			Double x = DoubleLit.extract(args[0]).getValue();
-			Double y = DoubleLit.extract(args[1]).getValue();
-			return mkConst(new DoubleLit(x.mod(y)));
-		}
-	};
-	*/
 
 	public static AuOperator.Descriptor doubleEq = new AuOperator.EvalDescriptor(
 			mkPi(mkConst(doubleType),
@@ -122,8 +93,6 @@ public class DoubleArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "doubleEq"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			Double x = DoubleLit.extract(args[0]).getValue();
 			Double y = DoubleLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) == 0));
@@ -135,8 +104,6 @@ public class DoubleArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "doubleInEq"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			Double x = DoubleLit.extract(args[0]).getValue();
 			Double y = DoubleLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) != 0));
@@ -148,8 +115,6 @@ public class DoubleArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "doubleLt"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			Double x = DoubleLit.extract(args[0]).getValue();
 			Double y = DoubleLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) < 0));
@@ -161,8 +126,6 @@ public class DoubleArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "doubleGt"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			Double x = DoubleLit.extract(args[0]).getValue();
 			Double y = DoubleLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) > 0));
@@ -174,8 +137,6 @@ public class DoubleArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "doubleLe"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			Double x = DoubleLit.extract(args[0]).getValue();
 			Double y = DoubleLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) <= 0));
@@ -187,34 +148,9 @@ public class DoubleArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "doubleGe"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			Double x = DoubleLit.extract(args[0]).getValue();
 			Double y = DoubleLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) >= 0));
 		}
 	};
-	/*
-	public static AuOperator.Descriptor doubleFold = new AuOperator.EvalDescriptor(
-			mkPi(mkConst(doubleType),
-			 mkPi(mkMeta(),
-			  mkPi(mkVar(0, mkMeta()),
-			   mkPi(mkPi(mkVar(1, mkMeta()),
-					   mkPi(mkConst(DoubleArithmetic.doubleType),
-							   mkVar(3, mkMeta()))),
-			    mkVar(2, mkMeta()))))), 4) {
-		@Override public String toString() { return "doubleFold"; }
-		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[2].primitive()
-					|| !args[3].primitive())
-				return mkOperator(this, args);
-			AuTerm value = args[2];
-			Double n = DoubleLit.extract(args[0]).getValue();
-			for(int i = 0; i < n.doubleValue(); i++)
-				value = mkApply(mkApply(args[3], value),
-						mkConst(new DoubleLit(i)));
-			return value;
-		}
-	};
-	*/
 }

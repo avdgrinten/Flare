@@ -15,7 +15,7 @@ public class Mutation {
 			 mkMeta()), 1) {
 		@Override public String toString() { return "Mutator"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 
@@ -27,7 +27,7 @@ public class Mutation {
 		}
 		@Override public String toString() { return "embed"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	public static AuOperator.Descriptor embed = new Embed();
@@ -43,7 +43,7 @@ public class Mutation {
 		}
 		@Override public String toString() { return "seq"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	public static AuOperator.Descriptor seq = new Seq();
@@ -61,7 +61,7 @@ public class Mutation {
 		}
 		@Override public String toString() { return "join"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	public static AuOperator.Descriptor join = new Join();
@@ -77,7 +77,7 @@ public class Mutation {
 		}
 		@Override public String toString() { return "loop"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	public static AuOperator.Descriptor loop = new Loop();

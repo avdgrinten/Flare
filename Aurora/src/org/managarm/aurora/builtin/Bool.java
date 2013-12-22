@@ -2,7 +2,6 @@ package org.managarm.aurora.builtin;
 
 import static org.managarm.aurora.lang.AuTerm.mkConst;
 import static org.managarm.aurora.lang.AuTerm.mkMeta;
-import static org.managarm.aurora.lang.AuTerm.mkOperator;
 import static org.managarm.aurora.lang.AuTerm.mkPi;
 import static org.managarm.aurora.lang.AuTerm.mkVar;
 
@@ -50,8 +49,6 @@ public class Bool {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "boolOr"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			boolean x = BoolLit.extract(args[0]).getValue();
 			boolean y = BoolLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x || y));
@@ -63,8 +60,6 @@ public class Bool {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "boolAnd"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			boolean x = BoolLit.extract(args[0]).getValue();
 			boolean y = BoolLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x && y));
@@ -81,8 +76,6 @@ public class Bool {
 			return "ite";
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[1].primitive())
-				return mkOperator(this, args);
 			BoolLit lit = BoolLit.extract(args[1]);
 			return lit.value ? args[2] : args[3];
 		}

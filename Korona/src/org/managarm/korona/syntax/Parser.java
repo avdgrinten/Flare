@@ -106,9 +106,11 @@ public class Parser {
 				if (c != '.')
 					return new PegError.ExpectError(p.curSourceRef(), "dot");
 				
-				s.append(c);
+				s.append('.');
 				p.consume();
 				c = p.read();
+				if(!(c >= '0' && c <= '9'))
+					return new PegError.ExpectError(p.curSourceRef(), "number");
 
 				do {
 					s.append(c);
@@ -121,7 +123,6 @@ public class Parser {
 				return new Double(s.toString());
 			}
 		});
-		
 		g.setRule(Tag.intNumber, new PegItem() {
 			public Object parse(PegParser p) {
 				p.parse(g.ref(Tag.space));

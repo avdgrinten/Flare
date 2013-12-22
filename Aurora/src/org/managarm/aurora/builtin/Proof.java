@@ -16,7 +16,7 @@ public class Proof {
 			 mkMeta()), 1) {
 		@Override public String toString() { return "Proof"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	

@@ -40,7 +40,7 @@ public class Anys {
 			return true;
 		}
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	
@@ -52,8 +52,6 @@ public class Anys {
 		}
 		
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive())
-				return mkOperator(this, args);
 			AuOperator operator = (AuOperator)args[0]; 
 			return operator.getArgument(0);
 		}
@@ -66,8 +64,6 @@ public class Anys {
 		}
 		
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive())
-				return mkOperator(this, args);
 			AuOperator operator = (AuOperator)args[0];
 			return operator.getArgument(1);
 		}

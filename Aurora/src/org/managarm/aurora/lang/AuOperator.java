@@ -22,6 +22,10 @@ public final class AuOperator extends AuTerm {
 		protected abstract boolean reducible(AuTerm[] args);
 		protected abstract AuTerm reduce(AuTerm[] args);
 	}
+	
+	public static class NotReducibleException extends RuntimeException {
+		private static final long serialVersionUID = 5953173928263057491L;
+	}
 
 	public static abstract class EvalDescriptor extends Descriptor {
 		public EvalDescriptor(AuTerm type, int arity) {

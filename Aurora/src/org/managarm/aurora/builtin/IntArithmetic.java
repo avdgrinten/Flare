@@ -56,8 +56,6 @@ public class IntArithmetic {
 			  mkConst(intType))), 2) {
 		@Override public String toString() { return "intAdd"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new IntLit(x.add(y)));
@@ -69,8 +67,6 @@ public class IntArithmetic {
 			  mkConst(intType))), 2) {
 		@Override public String toString() { return "intSub"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new IntLit(x.subtract(y)));
@@ -82,8 +78,6 @@ public class IntArithmetic {
 			  mkConst(intType))), 2) {
 		@Override public String toString() { return "intMul"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new IntLit(x.multiply(y)));
@@ -95,8 +89,6 @@ public class IntArithmetic {
 			  mkConst(intType))), 2) {
 		@Override public String toString() { return "intDiv"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new IntLit(x.divide(y)));
@@ -108,8 +100,6 @@ public class IntArithmetic {
 			  mkConst(intType))), 2) {
 		@Override public String toString() { return "intMod"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new IntLit(x.mod(y)));
@@ -122,8 +112,6 @@ public class IntArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "intEq"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) == 0));
@@ -135,8 +123,6 @@ public class IntArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "intInEq"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) != 0));
@@ -148,8 +134,6 @@ public class IntArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "intLt"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) < 0));
@@ -161,8 +145,6 @@ public class IntArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "intGt"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) > 0));
@@ -174,8 +156,6 @@ public class IntArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "intLe"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) <= 0));
@@ -187,8 +167,6 @@ public class IntArithmetic {
 			  mkConst(Bool.boolType))), 2) {
 		@Override public String toString() { return "intGe"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[1].primitive())
-				return mkOperator(this, args);
 			BigInteger x = IntLit.extract(args[0]).getValue();
 			BigInteger y = IntLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x.compareTo(y) >= 0));
@@ -209,9 +187,6 @@ public class IntArithmetic {
 			    mkVar(2, mkMeta()))))), 4) {
 		@Override public String toString() { return "intFold"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			if(!args[0].primitive() || !args[2].primitive()
-					|| !args[3].primitive())
-				return mkOperator(this, args);
 			AuTerm value = args[2];
 			BigInteger n = IntLit.extract(args[0]).getValue();
 			for(int i = 0; i < n.intValue(); i++)

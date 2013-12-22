@@ -15,7 +15,7 @@ public class Locals {
 			 mkMeta()), 1) {
 		@Override public String toString() { return "Local"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	
@@ -29,7 +29,7 @@ public class Locals {
 		
 		@Override public String toString() { return "localAlloc"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	
@@ -41,7 +41,7 @@ public class Locals {
 
 		@Override public String toString() { return "localRead"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};
 	
@@ -54,7 +54,7 @@ public class Locals {
 		
 		@Override public String toString() { return "localWrite"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
-			return mkOperator(this, args);
+			throw new AuOperator.NotReducibleException();
 		}
 	};	
 }
