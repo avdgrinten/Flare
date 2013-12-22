@@ -3,6 +3,19 @@ package org.managarm.korona.syntax;
 import java.math.BigInteger;
 
 public class StLiteral {
+	public static class LitDecimal extends StNode {
+		private Double p_value;
+		
+		public LitDecimal(Double value) {
+			p_value = value;
+		}
+		public Double value() {
+			return p_value;
+		}
+		@Override public String toString() {
+			return p_value.toString();
+		}
+	}
 	public static class LitInt extends StNode {
 		private BigInteger p_value;
 		

@@ -2,7 +2,8 @@
 import Korona;
 
 module Test {
-	export main := let list := (emptyList Meta) + Int + Bool + String ::
-		print (Tuple list);
+	//export main := let list := (emptyList Meta) + Int + Bool + String ::
+	//	print (Tuple list);
+	export main := print (1.0 + 6.5);
 }
 

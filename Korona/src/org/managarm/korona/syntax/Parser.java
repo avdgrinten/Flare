@@ -21,7 +21,7 @@ public class Parser {
 	
 	private enum Tag {
 		space, whitespace, lineComment, blockComment,
-		number,
+		intNumber, decimalNumber,
 		ident, charIdent, operatorIdent,
 		string,
 		specSemicolon, specEqual, specColonEqual, specDoubleEqual, specInEqual,
@@ -38,7 +38,7 @@ public class Parser {
 			shiftExpr, addExpr, multExpr, accessExpr,
 			tailExpr,
 			parenExpr, letExpr, ifExpr, blockExpr,
-			functionExpr, metaExpr, litNumberExpr, litStringExpr,
+			functionExpr, metaExpr, litIntExpr, litDecimalExpr,litStringExpr,
 			identExpr,
 		file, root, importRoot, moduleRoot, exportRoot, externRoot
 	}
@@ -84,7 +84,45 @@ public class Parser {
 				),
 				new PegItem.Any(2)));
 		
-		g.setRule(Tag.number, new PegItem() {
+		g.setRule(Tag.decimalNumber, new PegItem() {
+			public Object parse(PegParser p) {
+				p.parse(g.ref(Tag.space));
+
+				if(p.eof())
+					return new PegError.EofError(p.curSourceRef());
+				char c = p.read();
+				if(!(c >= '0' && c <= '9'))
+					return new PegError.ExpectError(p.curSourceRef(), "number");
+
+				StringBuilder s = new StringBuilder();
+				do {
+					s.append(c);
+					p.consume();
+					if(p.eof())
+						break;
+					c = p.read();
+				} while(c >= '0' && c <= '9');
+				
+				if (c != '.')
+					return new PegError.ExpectError(p.curSourceRef(), "dot");
+				
+				s.append(c);
+				p.consume();
+				c = p.read();
+
+				do {
+					s.append(c);
+					p.consume();
+					if(p.eof())
+						break;
+					c = p.read();
+				} while(c >= '0' && c <= '9');
+
+				return new Double(s.toString());
+			}
+		});
+		
+		g.setRule(Tag.intNumber, new PegItem() {
 			public Object parse(PegParser p) {
 				p.parse(g.ref(Tag.space));
 
@@ -555,7 +593,8 @@ public class Parser {
 				g.ref(Tag.blockExpr),
 				g.ref(Tag.functionExpr),
 				g.ref(Tag.metaExpr),
-				g.ref(Tag.litNumberExpr),
+				g.ref(Tag.litDecimalExpr),
+				g.ref(Tag.litIntExpr),
 				g.ref(Tag.litStringExpr),
 				g.ref(Tag.identExpr)));
 		
@@ -639,7 +678,12 @@ public class Parser {
 				@Override public Object transform(String in) {
 					return new StMeta();
 				}}));
-		g.setRule(Tag.litNumberExpr, transform(g.ref(Tag.number),
+		g.setRule(Tag.litDecimalExpr, transform(g.ref(Tag.decimalNumber),
+				new PegTransform<Double>() {
+					@Override public Object transform(Double in) {
+						return new StLiteral.LitDecimal(in);
+					}}));
+		g.setRule(Tag.litIntExpr, transform(g.ref(Tag.intNumber),
 			new PegTransform<BigInteger>() {
 				@Override public Object transform(BigInteger in) {
 					return new StLiteral.LitInt(in);

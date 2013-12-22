@@ -3,6 +3,7 @@ module Korona {
 	@embed export Nil := Builtin.Nil;
 	@embed export Bool := Builtin.Bool;
 	@embed export Int := Builtin.Int;
+	@embed export Double := Builtin.Double;
 	@embed export String := Builtin.String;
 	@embed export Product := Builtin.Product;
 	@embed export List := Builtin.List;
@@ -25,6 +26,18 @@ module Korona {
 	export (>) := x:Int => y:Int => Builtin.intGt x y;
 	export (<=) := x:Int => y:Int => Builtin.intLe x y;
 	export (>=) := x:Int => y:Int => Builtin.intGe x y;
+	
+	export (+) := x:Double => y:Double => Builtin.doubleAdd x y;
+	export (-) := x:Double => y:Double => Builtin.doubleSub x y;
+	export (*) := x:Double => y:Double => Builtin.doubleMul x y;
+	export (/) := x:Double => y:Double => Builtin.doubleDiv x y;
+	
+	export (==) := x:Double => y:Double => Builtin.doubleEq x y;
+	export (!=) := x:Double => y:Double => Builtin.doubleInEq x y;
+	//@embed export (<) := x:Double => y:Double => Builtin.doubleLt x y;
+	export (>) := x:Double => y:Double => Builtin.doubleGt x y;
+	export (<=) := x:Double => y:Double => Builtin.doubleLe x y;
+	export (>=) := x:Double => y:Double => Builtin.doubleGe x y;
 	
 	export (||) := p:Bool => q:Bool => Builtin.boolOr p q;
 	export (&&) := p:Bool => q:Bool => Builtin.boolAnd p q;
