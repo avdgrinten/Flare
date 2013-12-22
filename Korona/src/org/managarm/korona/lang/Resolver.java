@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.managarm.aurora.builtin.DoubleArithmetic;
 import org.managarm.aurora.builtin.IntArithmetic;
 import org.managarm.aurora.builtin.Locals;
 import org.managarm.aurora.builtin.Mutation;
@@ -316,6 +317,9 @@ public class Resolver {
 			return res;
 		}else if(in instanceof StApply) {
 			return buildApply(in, Collections.<AuTerm>emptyList());
+		}else if(in instanceof StLiteral.LitDecimal) {
+			StLiteral.LitDecimal expr = (StLiteral.LitDecimal)in;
+			return mkConst(new DoubleArithmetic.DoubleLit(expr.value()));
 		}else if(in instanceof StLiteral.LitInt) {
 			StLiteral.LitInt expr = (StLiteral.LitInt)in;
 			return mkConst(new IntArithmetic.IntLit(expr.value()));
