@@ -2,7 +2,7 @@ package org.managarm.aurora.lang;
 
 
 public abstract class AuTerm {
-	public static boolean verifyWellformed = false;
+	public static boolean verifyWellformed = true;
 	
 	public static AuMeta mkMeta() {
 		return mkMetaExt(null);

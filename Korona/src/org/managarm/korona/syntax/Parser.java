@@ -31,13 +31,13 @@ public class Parser {
 			specDoubleBar, specDoubleAnd, specLt, specGt, specLe, specGe, specDoubleLt, specDoubleGt,
 			specArrow, specDoubleArrow,
 		kwImport, kwModule, kwExport, kwExtern,
-		kwMeta, kwVar, kwIf, kwThen, kwElse, kwWhile, whileStm, kwReturn,
+		kwMeta, kwLet, kwVar, kwIf, kwThen, kwElse, kwWhile, whileStm, kwReturn,
 			kwEmbed, kwImplicit,
 		argumentDecl, localDecl,
 		expr, assignExpr, applyExpr, connectiveExpr, compareExpr,
 			shiftExpr, addExpr, multExpr, accessExpr,
 			tailExpr,
-			parenExpr, ifExpr, blockExpr,
+			parenExpr, letExpr, ifExpr, blockExpr,
 			functionExpr, metaExpr, litNumberExpr, litStringExpr,
 			identExpr,
 		file, root, importRoot, moduleRoot, exportRoot, externRoot
@@ -251,6 +251,8 @@ public class Parser {
 		g.setRule(Tag.kwExtern, transform(new PegItem.Sequence(g.ref(Tag.space),
 				new PegItem.CharString("extern")), PegParser.forgetLeft));
 
+		g.setRule(Tag.kwLet, transform(new PegItem.Sequence(g.ref(Tag.space),
+				new PegItem.CharString("let")), PegParser.forgetLeft));
 		g.setRule(Tag.kwMeta, transform(new PegItem.Sequence(g.ref(Tag.space),
 				new PegItem.CharString("Meta")), PegParser.forgetLeft));
 		g.setRule(Tag.kwVar, transform(new PegItem.Sequence(g.ref(Tag.space),
@@ -479,8 +481,7 @@ public class Parser {
 						new PegItem.Sequence(
 							new PegItem.TrivialChoice(
 								g.ref(Tag.specPlus),
-								g.ref(Tag.specMinus)
-							),
+								g.ref(Tag.specMinus)),
 							g.ref(Tag.multExpr)))),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
@@ -507,8 +508,7 @@ public class Parser {
 							new PegItem.TrivialChoice(
 								g.ref(Tag.specTimes),
 								g.ref(Tag.specSlash),
-								g.ref(Tag.specPercent)
-							),
+								g.ref(Tag.specPercent)),
 							g.ref(Tag.accessExpr)))),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
@@ -550,6 +550,7 @@ public class Parser {
 				}}));
 		g.setRule(Tag.tailExpr, new PegItem.Choice(
 				g.ref(Tag.parenExpr),
+				g.ref(Tag.letExpr),
 				g.ref(Tag.ifExpr),
 				g.ref(Tag.blockExpr),
 				g.ref(Tag.functionExpr),
@@ -564,9 +565,30 @@ public class Parser {
 				@Override public Object transform(Object[] in) {
 					return (StNode)in[1];
 				}}));
-		g.setRule(Tag.ifExpr, transform(new PegItem.Sequence(g.ref(Tag.kwIf),
-				g.ref(Tag.expr), g.ref(Tag.kwThen), g.ref(Tag.expr),
-				g.ref(Tag.kwElse), g.ref(Tag.expr)),
+		g.setRule(Tag.letExpr, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.kwLet),
+					g.ref(Tag.ident),
+					g.ref(Tag.specColonEqual),
+					g.ref(Tag.expr),
+					g.ref(Tag.specDoubleColon),
+					g.ref(Tag.expr)),
+			new PegTransform<Object[]>() {
+				@Override public Object transform(Object[] in) {
+					String name = (String)in[1];
+					StNode defn = (StNode)in[3];
+					StNode expr = (StNode)in[5];
+					return new StLetExpr(name, defn, expr);
+				}
+			}));
+		g.setRule(Tag.ifExpr, transform(
+				new PegItem.Sequence(
+					g.ref(Tag.kwIf),
+					g.ref(Tag.expr),
+					g.ref(Tag.kwThen),
+					g.ref(Tag.expr),
+					g.ref(Tag.kwElse),
+					g.ref(Tag.expr)),
 			new PegTransform<Object[]>() {
 				@Override public Object transform(Object[] in) {
 					StNode expr = (StNode)in[1];

@@ -199,9 +199,13 @@ public class IntArithmetic {
 			mkPi(mkConst(intType),
 			 mkPi(mkMeta(),
 			  mkPi(mkVar(0, mkMeta()),
-			   mkPi(mkPi(mkVar(1, mkMeta()),
-					   mkPi(mkConst(IntArithmetic.intType),
-							   mkVar(3, mkMeta()))),
+			   mkPi(mkPi(mkConst(intType),
+			       mkPi(mkOperator(Proof.proofType,
+			               mkOperator(intLt,
+			                   mkVar(0, mkConst(intType)),
+			                   mkVar(3, mkConst(intType)))),
+			           mkPi(mkVar(3, mkMeta()),
+				           mkVar(4, mkMeta())))),
 			    mkVar(2, mkMeta()))))), 4) {
 		@Override public String toString() { return "intFold"; }
 		@Override protected AuTerm reduce(AuTerm[] args) {
@@ -211,8 +215,8 @@ public class IntArithmetic {
 			AuTerm value = args[2];
 			BigInteger n = IntLit.extract(args[0]).getValue();
 			for(int i = 0; i < n.intValue(); i++)
-				value = mkApply(mkApply(args[3], value),
-						mkConst(new IntLit(i)));
+				value = mkApply(mkApply(mkApply(args[3], mkConst(new IntLit(i))),
+					mkConst(Proof.tautology)), value);
 			return value;
 		}
 	};

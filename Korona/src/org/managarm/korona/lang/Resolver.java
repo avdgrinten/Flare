@@ -34,6 +34,7 @@ import org.managarm.korona.syntax.StApply;
 import org.managarm.korona.syntax.StFile;
 import org.managarm.korona.syntax.StIdent;
 import org.managarm.korona.syntax.StLambda;
+import org.managarm.korona.syntax.StLetExpr;
 import org.managarm.korona.syntax.StLiteral;
 import org.managarm.korona.syntax.StMeta;
 import org.managarm.korona.syntax.StNode;
@@ -265,6 +266,20 @@ public class Resolver {
 	public AuTerm buildExpr(StNode in) {
 		if(in instanceof StMeta) {
 			return mkMeta();
+		}else if(in instanceof StLetExpr) {
+			StLetExpr expr = (StLetExpr)in;
+			
+			NamedTerm.Name descriptor = new NamedTerm.Name();
+			AuTerm defn = buildExpr(expr.getDefn());
+			if(defn.isOperator(exprError))
+				return mkOperator(exprError, mkConst(errorType));
+			
+			pushScope(new Scope.BindScope(expr.getName(),
+					defn.type(), descriptor));
+			AuTerm res = mkNamedLambdaExt(null, descriptor,
+					defn.type(), buildExpr(expr.getExpr()));
+			popScope();
+			return mkApply(res, defn);
 		}else if(in instanceof StLambda) {
 			StLambda expr = (StLambda)in;
 			
@@ -288,6 +303,8 @@ public class Resolver {
 
 			NamedTerm.Name descriptor = new NamedTerm.Name();
 			AuTerm type = buildExpr(expr.getArgument().type());
+			if(type.isOperator(exprError))
+				return mkOperator(exprError, mkConst(errorType));
 			
 			pushScope(new Scope.BindScope(expr.getArgument().ident(),
 					type, descriptor));
@@ -495,7 +512,10 @@ public class Resolver {
 						arguments, overloads);
 			
 			if(overloads.size() == 0) {
-				p_messages.add(new ResolveMsg.NoOverload(ident));
+				AuTerm[] arg_types = new AuTerm[arguments.size()];
+				for(int i = 0; i < arguments.size(); i++)
+					arg_types[i] = arguments.get(i).type();
+				p_messages.add(new ResolveMsg.NoOverload(ident, arg_types));
 				return mkOperator(exprError, mkConst(errorType));
 			}
 			if(overloads.size() > 1)
@@ -503,9 +523,24 @@ public class Resolver {
 						overloads.get(0)));
 			return overloads.get(0);
 		}else{
+			// break early if there are already errors
+			for(AuTerm argument : arguments)
+				if(argument.isOperator(exprError))
+					return mkOperator(exprError, mkConst(errorType));
+			
 			AuTerm res = buildExpr(function);
-			for(int i = 0; i < arguments.size(); i++)
+			for(int i = 0; i < arguments.size(); i++) {
+				AuPi fun_type = (AuPi)res.type();
+				AuTerm bound_type = fun_type.getBound();
+				AuTerm arg_type = arguments.get(i).type();
+				
+				if(!bound_type.equals(arg_type)) {
+					p_messages.add(new ResolveMsg.TypeMismatch(arg_type, bound_type));
+					return mkOperator(exprError, mkConst(errorType));
+				}
+				
 				res = mkApply(res, arguments.get(i));
+			}
 			return res;
 		}
 	}

@@ -140,7 +140,7 @@ public class Lists {
 			           mkVar(0, mkConst(IntArithmetic.intType)),
 			           mkOperator(listLen, mkVar(2, mkMeta()),
 			               mkVar(1, mkOperator(listType, mkVar(2, mkMeta())))))),
-			    mkOperator(listType, mkVar(3, mkMeta())))))), 4) {
+			    mkVar(3, mkMeta()))))), 4) {
 		@Override public String toString() {
 			return "listElem";
 		}

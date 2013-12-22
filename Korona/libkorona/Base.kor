@@ -4,9 +4,11 @@ module Korona {
 	@embed export Bool := Builtin.Bool;
 	@embed export Int := Builtin.Int;
 	@embed export String := Builtin.String;
+	@embed export Product := Builtin.Product;
 	@embed export List := Builtin.List;
 	@embed export Any := Builtin.Any;
 	@embed export Mutator := Builtin.Mutator;
+	@embed export Proof := Builtin.Proof;
 	@embed export Local := Builtin.Local;
 	
 	export nil := Builtin.nil;
@@ -19,7 +21,7 @@ module Korona {
 	
 	export (==) := x:Int => y:Int => Builtin.intEq x y;
 	export (!=) := x:Int => y:Int => Builtin.intInEq x y;
-	export (<) := x:Int => y:Int => Builtin.intLt x y;
+	@embed export (<) := x:Int => y:Int => Builtin.intLt x y;
 	export (>) := x:Int => y:Int => Builtin.intGt x y;
 	export (<=) := x:Int => y:Int => Builtin.intLe x y;
 	export (>=) := x:Int => y:Int => Builtin.intGe x y;
@@ -41,14 +43,20 @@ module Korona {
 		Builtin.seq Nil Nil p (x:Nil => q);
 	
 	export intFold := count:Int => @implicit T:Meta => initial:T
-			=> f:(current:T -> k:Int -> T) =>
+			=> f:(k:Int -> p:(Proof (k < count)) -> current:T -> T) =>
 		Builtin.intFold count T initial f;
 	
-	export intSum := n:Int => f:(k:Int -> Int) =>
-		intFold n 0 (x:Int => k:Int => x + (f k));
+	export intSum := count:Int => f:(k:Int -> Int) =>
+		intFold count 0 (k:Int => p:(Proof (k < count)) => current:Int =>
+			current + (f k));
 	
 	export emptyList := Builtin.emptyList;
 	export singletonList := Builtin.singletonList;
+	@embed export listLen := @implicit T:Meta => list:(List T)
+		=> Builtin.listLen T list;
+	export listElem := @implicit T:Meta => list:(List T)
+		=> k:Int => p:(Proof (k < (listLen list))) =>
+			Builtin.listElem T list k p;
 	
 	export (+) := @implicit T:Meta => list:(List T) => item:T =>
 		Builtin.listAppend T list item;
@@ -72,4 +80,8 @@ module Korona {
 	
 	export (=) := @implicit L:Meta => local:(Local L) => value:L =>
 		Builtin.localWrite L local value;
+	
+	export Tuple := types:(List Meta) => intFold (listLen types) Nil
+		(k:Int => p:(Proof (k < (listLen types))) => prefix:Meta =>
+			Product prefix (listElem types k p));
 }

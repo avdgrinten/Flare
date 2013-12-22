@@ -80,14 +80,26 @@ public abstract class ResolveMsg {
 	
 	public static class NoOverload extends ResolveMsg {
 		private StIdent p_ident;
+		private AuTerm[] p_argTypes;
 		
-		public NoOverload(StIdent ident) {
+		public NoOverload(StIdent ident, AuTerm[] arg_types) {
 			super(Level.kError);
 			p_ident = ident;
+			p_argTypes = arg_types;
 		}
 		
 		@Override public String toString() {
-			return "No valid overload for " + p_ident.string();
+			StringBuilder builder = new StringBuilder();
+			builder.append("No valid overload for ");
+			builder.append(p_ident.string());
+			
+			builder.append("\n    With argument types: ");
+			for(int i = 0; i < p_argTypes.length; i++) {
+				if(i > 0)
+					builder.append(", ");
+				builder.append(p_argTypes[i]);
+			}
+			return builder.toString();
 		}
 	}
 
@@ -121,6 +133,21 @@ public abstract class ResolveMsg {
 			return "Identifier " + p_ident.string() + " is ambiguous\n"
 					+ "    Chosen candidate: " + p_chosen;
 		}
+	}
+	
+	public static class TypeMismatch extends ResolveMsg {
+		private AuTerm p_fromType;
+		private AuTerm p_toType;
+		
+		public TypeMismatch(AuTerm from_type, AuTerm to_type) {
+			super(Level.kError);
+			p_fromType = from_type;
+			p_toType = to_type;
+		}
+		
+		@Override public String toString() {
+			return "Type " + p_fromType + " does not match " + p_toType;
+		} 
 	}
 	
 	private Level p_level; 

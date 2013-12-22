@@ -2,6 +2,7 @@
 import Korona;
 
 module Test {
-	export main := print "Hello world!";
+	export main := let list := (emptyList Meta) + Int + Bool + String ::
+		print (Tuple list);
 }
 
