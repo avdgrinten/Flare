@@ -2,8 +2,5 @@
 import Korona;
 
 module Test {
-	//export main := let list := (emptyList Meta) + Int + Bool + String ::
-	//	print (Tuple list);
-	export main := print (1.0 + 6.5);
+	export main := print (if "Ha" != "ll" then "yes" else "no");
 }
-

@@ -117,17 +117,6 @@ public class IntArithmetic {
 			return mkConst(new Bool.BoolLit(x.compareTo(y) == 0));
 		}
 	};
-	public static AuOperator.Descriptor intInEq = new AuOperator.EvalDescriptor(
-			mkPi(mkConst(intType),
-			 mkPi(mkConst(intType),
-			  mkConst(Bool.boolType))), 2) {
-		@Override public String toString() { return "intInEq"; }
-		@Override protected AuTerm reduce(AuTerm[] args) {
-			BigInteger x = IntLit.extract(args[0]).getValue();
-			BigInteger y = IntLit.extract(args[1]).getValue();
-			return mkConst(new Bool.BoolLit(x.compareTo(y) != 0));
-		}
-	};
 	public static AuOperator.Descriptor intLt = new AuOperator.EvalDescriptor(
 			mkPi(mkConst(intType),
 			 mkPi(mkConst(intType),

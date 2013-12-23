@@ -2,6 +2,8 @@
 module Korona {
 	@embed export Nil := Builtin.Nil;
 	@embed export Bool := Builtin.Bool;
+	@embed export false := Builtin.false;
+	@embed export true := Builtin.true;
 	@embed export Int := Builtin.Int;
 	@embed export Double := Builtin.Double;
 	@embed export String := Builtin.String;
@@ -14,6 +16,14 @@ module Korona {
 	
 	export nil := Builtin.nil;
 	
+	export (!) := x:Bool => Builtin.boolNot x;
+	
+	export (==) := x:Bool => y:Bool => Builtin.boolEq x y;
+	export (!=) := x:Bool => y:Bool => Builtin.boolInEq x y;
+	
+	export (||) := x:Bool => y:Bool => Builtin.boolOr x y;
+	export (&&) := x:Bool => y:Bool => Builtin.boolAnd x y;
+	
 	export (+) := x:Int => y:Int => Builtin.intAdd x y;
 	export (-) := x:Int => y:Int => Builtin.intSub x y;
 	export (*) := x:Int => y:Int => Builtin.intMul x y;
@@ -21,7 +31,7 @@ module Korona {
 	export (%) := x:Int => y:Int => Builtin.intMod x y;
 	
 	export (==) := x:Int => y:Int => Builtin.intEq x y;
-	export (!=) := x:Int => y:Int => Builtin.intInEq x y;
+	export (!=) := x:Int => y:Int => Builtin.boolNot (Builtin.intEq x y);
 	@embed export (<) := x:Int => y:Int => Builtin.intLt x y;
 	export (>) := x:Int => y:Int => Builtin.intGt x y;
 	export (<=) := x:Int => y:Int => Builtin.intLe x y;
@@ -33,14 +43,24 @@ module Korona {
 	export (/) := x:Double => y:Double => Builtin.doubleDiv x y;
 	
 	export (==) := x:Double => y:Double => Builtin.doubleEq x y;
-	export (!=) := x:Double => y:Double => Builtin.doubleInEq x y;
+	export (!=) := x:Double => y:Double => Builtin.boolNot (Builtin.doubleEq x y);
 	//@embed export (<) := x:Double => y:Double => Builtin.doubleLt x y;
 	export (>) := x:Double => y:Double => Builtin.doubleGt x y;
 	export (<=) := x:Double => y:Double => Builtin.doubleLe x y;
 	export (>=) := x:Double => y:Double => Builtin.doubleGe x y;
 	
-	export (||) := p:Bool => q:Bool => Builtin.boolOr p q;
-	export (&&) := p:Bool => q:Bool => Builtin.boolAnd p q;
+	export (==) := x:String => y:String => Builtin.strEq x y;
+	export (!=) := x:String => y:String => Builtin.boolNot (Builtin.strEq x y);
+	export strCmp := x:String => y:String => Builtin.strCmp x y;
+	export (+) := x:String => y:String => Builtin.strConcat x y;
+	export strEmpty := x:String => Builtin.strEmpty x;
+	export strTrim := x:String => Builtin.strTrim x;
+	export strContains := x:String => y:String => Builtin.strContains x y;
+	export (>) := x:String => y:String => Builtin.intGt (Builtin.strCmp x y) 0;
+	export (<) := x:String => y:String => Builtin.intLt (Builtin.strCmp x y) 0;
+	export strTl := x:String => Builtin.strTl x;
+	export strTu := x:String => Builtin.strTu x;
+	export strSub := x:String => y:Int => z:Int => Builtin.strSub x y z;
 	
 	export (ite) := @implicit T:Meta => c:Bool => t:T => e:T =>
 		Builtin.ite T c t e;

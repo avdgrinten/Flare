@@ -43,6 +43,16 @@ public class Bool {
 		}
 	};
 
+	public static AuOperator.Descriptor boolNot = new AuOperator.EvalDescriptor(
+			 mkPi(mkConst(boolType),
+			  mkConst(Bool.boolType)), 1) {
+		@Override public String toString() { return "boolNot"; }
+		@Override protected AuTerm reduce(AuTerm[] args) {
+			boolean x = BoolLit.extract(args[0]).getValue();
+			return mkConst(new Bool.BoolLit(!x));
+		}
+	};
+	
 	public static AuOperator.Descriptor boolOr = new AuOperator.EvalDescriptor(
 			mkPi(mkConst(boolType),
 			 mkPi(mkConst(boolType),
@@ -63,6 +73,29 @@ public class Bool {
 			boolean x = BoolLit.extract(args[0]).getValue();
 			boolean y = BoolLit.extract(args[1]).getValue();
 			return mkConst(new Bool.BoolLit(x && y));
+		}
+	};
+	
+	public static AuOperator.Descriptor boolEq = new AuOperator.EvalDescriptor(
+			mkPi(mkConst(boolType),
+			 mkPi(mkConst(boolType),
+			  mkConst(Bool.boolType))), 2) {
+		@Override public String toString() { return "boolEq"; }
+		@Override protected AuTerm reduce(AuTerm[] args) {
+			boolean x = BoolLit.extract(args[0]).getValue();
+			boolean y = BoolLit.extract(args[1]).getValue();
+			return mkConst(new Bool.BoolLit(x == y));
+		}
+	};
+	public static AuOperator.Descriptor boolInEq = new AuOperator.EvalDescriptor(
+			mkPi(mkConst(boolType),
+			 mkPi(mkConst(boolType),
+			  mkConst(Bool.boolType))), 2) {
+		@Override public String toString() { return "boolInEq"; }
+		@Override protected AuTerm reduce(AuTerm[] args) {
+			boolean x = BoolLit.extract(args[0]).getValue();
+			boolean y = BoolLit.extract(args[1]).getValue();
+			return mkConst(new Bool.BoolLit(x != y));
 		}
 	};
 	

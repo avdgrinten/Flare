@@ -98,17 +98,6 @@ public class DoubleArithmetic {
 			return mkConst(new Bool.BoolLit(x.compareTo(y) == 0));
 		}
 	};
-	public static AuOperator.Descriptor doubleInEq = new AuOperator.EvalDescriptor(
-			mkPi(mkConst(doubleType),
-			 mkPi(mkConst(doubleType),
-			  mkConst(Bool.boolType))), 2) {
-		@Override public String toString() { return "doubleInEq"; }
-		@Override protected AuTerm reduce(AuTerm[] args) {
-			Double x = DoubleLit.extract(args[0]).getValue();
-			Double y = DoubleLit.extract(args[1]).getValue();
-			return mkConst(new Bool.BoolLit(x.compareTo(y) != 0));
-		}
-	};
 	public static AuOperator.Descriptor doubleLt = new AuOperator.EvalDescriptor(
 			mkPi(mkConst(doubleType),
 			 mkPi(mkConst(doubleType),
